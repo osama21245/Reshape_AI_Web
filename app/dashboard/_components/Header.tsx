@@ -3,11 +3,10 @@ import Image from "next/image";
 import { UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { Star } from "lucide-react";
-import { useContext, useEffect, useState } from "react";
-import { UserDetailsContext } from "@/app/context/UserDetailsContext";
-
+import { useEffect, useState } from "react";
+import { useUserDetails } from "@/app/context/UserDetailsContext";
 const Header = () => {
-  const { userDetails } = useContext(UserDetailsContext);
+  const { userDetails } = useUserDetails();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
