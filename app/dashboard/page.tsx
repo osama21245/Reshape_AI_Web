@@ -8,6 +8,7 @@ import { X, Upload, Sparkles, ArrowRight, Zap, Users, Clock } from "lucide-react
 import AnimatedBackground from "./_components/AnimatedBackground";
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
+import Link from "next/link";
 //import { redirect } from "next/navigation";
 
 function DashboardPage() {
@@ -87,14 +88,20 @@ function DashboardPage() {
                                 transition={{ delay: 0.3, duration: 0.5 }}
                                 className="flex justify-center"
                             >
-                                <button className="group relative px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl hover:scale-105 transition-all duration-300">
-                                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
-                                    <div className="relative flex items-center gap-3 text-lg font-medium">
-                                        <Upload className="w-6 h-6" />
-                                        <span>Transform Your Room</span>
-                                        <Sparkles className="w-6 h-6" />
-                                    </div>
-                                </button>
+                                <Link href="/dashboard/upload">
+                                    <motion.button 
+                                        className="group relative px-10 py-5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl hover:scale-105 transition-all duration-300"
+                                        whileHover={{ scale: 1.05 }}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+                                        <div className="relative flex items-center gap-3 text-lg font-medium">
+                                            <Upload className="w-6 h-6" />
+                                            <span>Transform Your Room</span>
+                                            <Sparkles className="w-6 h-6" />
+                                        </div>
+                                    </motion.button>
+                                </Link>
                             </motion.div>
                         </motion.div>
                     </div>
