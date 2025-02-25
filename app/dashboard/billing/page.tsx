@@ -5,6 +5,8 @@ import { useState } from "react";
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import { useRouter } from 'next/navigation';
 import { useUserDetails } from "@/app/context/UserDetailsContext";
+import { OnApproveData, OnApproveActions } from "@paypal/paypal-js";
+
 const plans = [
     {
         credits: 20,
@@ -64,11 +66,24 @@ export default function BillingPage() {
         setSelectedPlan({ credits, price });
     };
 
-    const handleApprove = async () => {
+    const handleApprove = async (data: OnApproveData, actions: OnApproveActions) => {
         try {
+            console.log(data);
             setIsProcessing(true);
-        
-                 await fetch('/api/add-credits', {
+            if (!actions?.order) return;
+         // const order = 
+            await actions.order.capture();
+         // console.log(order);
+            
+        //     const response = await fetch(`/api/orders/${data.orderID}/capture`, {
+        //         method: "POST",
+        //         headers: { "Content-Type": "application/json" },
+        //     });
+
+        //     const orderData = await response.json();
+
+        //    if (orderData.status === "COMPLETED") {
+                await fetch('/api/add-credits', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -77,17 +92,13 @@ export default function BillingPage() {
                     })
                 });
 
-           
-                    // Update context
-                    setUserDetails({
-                        ...userDetails,
-                        credits: userDetails.credits + (selectedPlan?.credits || 0)
-                    });
+                setUserDetails({
+                    ...userDetails,
+                    credits: userDetails.credits + (selectedPlan?.credits || 0)
+                });
 
-                    // Show success dialog and redirect
-                    router.push('/dashboard?success=true');
-                
-            
+                router.push('/dashboard?success=true');
+          //  }
         } catch (error) {
             console.error('Payment processing error:', error);
         } finally {
