@@ -102,13 +102,13 @@ export function BeforeAfterSlider({ beforeImage, afterImage, onClose, imageId }:
                 </div>
 
                 {/* Slider Container */}
-                <div className="relative h-[300px] rounded-xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-sm">
-                    <div className="absolute inset-0">
+                <div className="relative w-full rounded-xl overflow-hidden border border-white/10 bg-white/5 backdrop-blur-sm">
+                    <div className="max-w-[900px] mx-auto">
                         <ReactBeforeSliderComponent
                             firstImage={{ imageUrl: beforeImage }}
                             secondImage={{ imageUrl: afterImage }}
                             delimiterColor="rgb(139, 92, 246)"
-                            className="w-full h-full"
+                            className="w-full"
                         />
                     </div>
                 </div>
