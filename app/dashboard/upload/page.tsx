@@ -16,6 +16,7 @@ import { BeforeAfterSlider } from "./_components/BeforeAfterSlider";
 import { useUserDetails } from "@/app/context/UserDetailsContext";
 import { toast } from "react-hot-toast";
 import Link from "next/link";
+import { Toaster } from 'react-hot-toast';
 
 export default function UploadPage() {
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -125,6 +126,7 @@ export default function UploadPage() {
 
     return (
         <>
+            <Toaster position="top-center" />
             <AnimatedBackground />
             <div className="min-h-screen py-20 px-4">
                 <div className="max-w-6xl mx-auto space-y-8">
