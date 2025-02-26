@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 
 export async function POST(
     request: Request,
-    { params }: { params: { orderId: string } }
+    context: { params: { orderId: string } }
 ) {
-    const orderId = await Promise.resolve(params.orderId);
+    const { orderId } = context.params;
 
     try {
         const response = await fetch(
