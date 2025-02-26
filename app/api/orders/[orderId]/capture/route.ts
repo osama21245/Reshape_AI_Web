@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
 export async function POST(
-    request: Request,
-    context: { params: { orderId: string } }
+    request: NextRequest,
+    context: { params?: { orderId?: string } }
 ) {
-    const { orderId } = context.params;
+    const orderId = context.params?.orderId;
+
+    if (!orderId) {
+        return NextResponse.json({ error: "Order ID is missing" }, { status: 400 });
+    }
 
     try {
         const response = await fetch(
