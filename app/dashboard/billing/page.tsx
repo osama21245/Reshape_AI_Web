@@ -68,21 +68,21 @@ export default function BillingPage() {
 
     const handleApprove = async (data: OnApproveData, actions: OnApproveActions) => {
         try {
-            console.log(data);
             setIsProcessing(true);
             if (!actions?.order) return;
-         // const order = 
-            await actions.order.capture();
-         // console.log(order);
+
+           // const order =
+            // await actions.order.capture();
+
+            const response = await fetch(`/api/orders/${data.orderID}/capture`, {
+
+                method: "POST",
+
+                headers: { "Content-Type": "application/json" },
+
+            });
             
-        //     const response = await fetch(`/api/orders/${data.orderID}/capture`, {
-        //         method: "POST",
-        //         headers: { "Content-Type": "application/json" },
-        //     });
-
-        //     const orderData = await response.json();
-
-        //    if (orderData.status === "COMPLETED") {
+            if (response.status === 200) {
                 await fetch('/api/add-credits', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -98,7 +98,12 @@ export default function BillingPage() {
                 });
 
                 router.push('/dashboard?success=true');
-          //  }
+            } 
+
+            
+         
+              
+           
         } catch (error) {
             console.error('Payment processing error:', error);
         } finally {
@@ -208,19 +213,26 @@ export default function BillingPage() {
                                 
                                 <div className="mb-4">
                                     <PayPalButtons 
-                                      onApprove={handleApprove}
-                                      onCancel={handleCancel}
-                                        createOrder={(data,actions)=>{
+                                        createOrder={(data, actions) => {
                                             return actions.order.create({
-                                                intent: "CAPTURE",
                                                 purchase_units: [{
                                                     amount: {
-                                                        value: selectedPlan.price.toFixed(2).toString(),
+                                                        value: selectedPlan?.price.toFixed(2).toString() || "0",
                                                         currency_code: "USD"
                                                     }
-                                                }]
-                                            })
-                                        }} 
+                                                }],
+                                                intent: "CAPTURE",
+                                                application_context: {
+                                                    return_url: `${window.location.origin}/dashboard`,
+                                                    cancel_url: `${window.location.origin}/dashboard/billing`
+                                                }
+                                            });
+                                        }}
+                                        onApprove={handleApprove}
+                                        onError={(err) => {
+                                            console.error('PayPal Error:', err);
+                                        }}
+                                        onCancel={handleCancel}
                                         style={{ layout: "vertical" }}
                                     />
                                 </div>
