@@ -6,6 +6,7 @@ import { PayPalButtons } from "@paypal/react-paypal-js";
 import { useRouter } from 'next/navigation';
 import { useUserDetails } from "@/app/context/UserDetailsContext";
 import { OnApproveData, OnApproveActions } from "@paypal/paypal-js";
+import axios from 'axios';
 
 const plans = [
     {
@@ -71,15 +72,8 @@ export default function BillingPage() {
             setIsProcessing(true);
             if (!actions?.order) return;
 
-           // const order =
-            // await actions.order.capture();
-
-            const response = await fetch(`/api/orders/${data.orderID}/capture`, {
-
-                method: "POST",
-
-                headers: { "Content-Type": "application/json" },
-
+            const response = await axios.post(`/api/orders/${data.orderID}/capture`, {
+                orderId: data.orderID
             });
             
             if (response.status === 200) {
@@ -98,12 +92,7 @@ export default function BillingPage() {
                 });
 
                 router.push('/dashboard?success=true');
-            } 
-
-            
-         
-              
-           
+            }
         } catch (error) {
             console.error('Payment processing error:', error);
         } finally {
