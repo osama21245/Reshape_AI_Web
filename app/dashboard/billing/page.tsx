@@ -4,9 +4,7 @@ import { Sparkles, Zap, Check } from "lucide-react";
 import { useState } from "react";
 import { PayPalButtons } from "@paypal/react-paypal-js";
 import { useRouter } from 'next/navigation';
-import { useUserDetails } from "@/app/context/UserDetailsContext";
-import { OnApproveData, OnApproveActions } from "@paypal/paypal-js";
-import axios from 'axios';
+
 
 const plans = [
     {
@@ -59,7 +57,7 @@ const plans = [
 
 export default function BillingPage() {
     const router = useRouter();
-    const { userDetails, setUserDetails } = useUserDetails();
+    //const { userDetails, setUserDetails } = useUserDetails();
     const [selectedPlan, setSelectedPlan] = useState<{credits: number, price: number} | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -67,42 +65,42 @@ export default function BillingPage() {
         setSelectedPlan({ credits, price });
     };
 
-    const handleApprove = async (data: OnApproveData, actions: OnApproveActions) => {
-        try {
-            setIsProcessing(true);
-            if (!actions?.order) return;
+    // const handleApprove = async (data: OnApproveData, actions: OnApproveActions) => {
+    //     try {
+    //         setIsProcessing(true);
+    //         if (!actions?.order) return;
 
-            const response = await axios.post(`/api/orders/${data.orderID}/capture`, {
-                orderId: data.orderID
-            });
+    //         const response = await axios.post(`/api/orders/${data.orderID}/capture`, {
+    //             orderId: data.orderID
+    //         });
             
-            if (response.status === 200) {
-                await fetch('/api/add-credits', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: userDetails.email,
-                        credits: selectedPlan?.credits
-                    })
-                });
+    //         if (response.status === 200) {
+    //             await fetch('/api/add-credits', {
+    //                 method: 'POST',
+    //                 headers: { 'Content-Type': 'application/json' },
+    //                 body: JSON.stringify({
+    //                     email: userDetails.email,
+    //                     credits: selectedPlan?.credits
+    //                 })
+    //             });
 
-                setUserDetails({
-                    ...userDetails,
-                    credits: userDetails.credits + (selectedPlan?.credits || 0)
-                });
+    //             setUserDetails({
+    //                 ...userDetails,
+    //                 credits: userDetails.credits + (selectedPlan?.credits || 0)
+    //             });
 
-                router.push('/dashboard?success=true');
-            }
-        } catch (error) {
-            console.error('Payment processing error:', error);
-        } finally {
-            setIsProcessing(false);
-        }
-    };
+    //             router.push('/dashboard?success=true');
+    //         }
+    //     } catch (error) {
+    //         console.error('Payment processing error:', error);
+    //     } finally {
+    //         setIsProcessing(false);
+    //     }
+    // };
 
-    const handleCancel = () => {
-        console.log("Cancelled");
-    };
+    // const handleCancel = () => {
+    //     console.log("Cancelled");
+    // };
 
     const createOrder =
     (data: any, actions: any) => {
