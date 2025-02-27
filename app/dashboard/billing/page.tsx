@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Sparkles, Zap, Check } from "lucide-react";
 import { useState } from "react";
 import { PayPalButtons } from "@paypal/react-paypal-js";
-import { useRouter } from 'next/navigation';
+//import { useRouter } from 'next/navigation';
 
 
 const plans = [
