@@ -104,6 +104,45 @@ export default function BillingPage() {
         console.log("Cancelled");
     };
 
+    const createOrder =
+    (data: any, actions: any) => {
+        return actions.order
+            .create({
+                purchase_units: [
+                    {
+                        description: "Product Description",
+                        amount: {
+                            currency_code: "USD",
+                            value: selectedPlan?.price.toFixed(2).toString() || "0",
+                        },
+                    },
+                ],
+            })
+            .then((orderID: any) => {
+                return orderID;
+            });
+    }
+
+// const onPayPalSubmit: any = async () => {
+//     try {
+//         const response = await recordPaymentService({
+//             amount: 100,
+//         })
+//     } catch (err) {
+//         console.log('onPayPalSubmit', err)
+//     }
+// }
+
+const onApprove = (data: any, actions: any) => {
+    return actions.order.capture().then(function (details: any) {
+        const { payer } = details;
+        console.log(payer);
+        //*perform db operations;
+        //*for Nextjs you can create an action like following
+        // onPayPalSubmit();
+    });
+};
+
     return (
         <div className="min-h-screen py-20 px-4">
             <div className="max-w-6xl mx-auto space-y-12">
@@ -201,29 +240,14 @@ export default function BillingPage() {
                                 </div>
                                 
                                 <div className="mb-4">
-                                    <PayPalButtons 
-                                        createOrder={(data, actions) => {
-                                            return actions.order.create({
-                                                purchase_units: [{
-                                                    amount: {
-                                                        value: selectedPlan?.price.toFixed(2).toString() || "0",
-                                                        currency_code: "USD"
-                                                    }
-                                                }],
-                                                intent: "CAPTURE",
-                                                application_context: {
-                                                    return_url: `${window.location.origin}/dashboard`,
-                                                    cancel_url: `${window.location.origin}/dashboard/billing`
-                                                }
-                                            });
-                                        }}
-                                        onApprove={handleApprove}
-                                        onError={(err) => {
-                                            console.error('PayPal Error:', err);
-                                        }}
-                                        onCancel={handleCancel}
-                                        style={{ layout: "vertical" }}
-                                    />
+                                <PayPalButtons
+                style={{ "layout": "vertical" }}
+                disabled={false}
+                forceReRender={[{ "layout": "vertical" }]}
+                fundingSource={undefined}
+                createOrder={createOrder}
+                onApprove={onApprove}
+            />
                                 </div>
                             </div>
                         </div>
