@@ -66,7 +66,7 @@ export default function BillingPage() {
     };
 
    
-    // @ts-ignore
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     const createOrder =
     (data: any, actions: any) => {
         return actions.order
@@ -96,8 +96,8 @@ export default function BillingPage() {
 //     }
 // }
 
-// @ts-ignore
 const onApprove = async (data: any, actions: any) => {
+    setIsProcessing(true);
     return actions.order.capture().then(async function (details: any) {
         const { payer } = details;
         console.log(payer);
@@ -115,9 +115,14 @@ const onApprove = async (data: any, actions: any) => {
             credits: userDetails.credits + (selectedPlan?.credits || 0)
         });
 
+        setIsProcessing(false);
         router.push('/dashboard?success=true');
+    }).catch((error: Error) => {
+        console.error('Payment error:', error);
+        setIsProcessing(false);
     });
 };
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
     return (
         <div className="min-h-screen py-20 px-4">
@@ -216,7 +221,6 @@ const onApprove = async (data: any, actions: any) => {
                                 </div>
                                 
                                 <div className="mb-4">
-                                {/* @ts-ignore */}
                                 <PayPalButtons
                 style={{ "layout": "vertical" }}
                 disabled={false}
