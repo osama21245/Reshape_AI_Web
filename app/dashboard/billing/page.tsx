@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import { Sparkles, Zap, Check } from "lucide-react";
 import { useState } from "react";
-import { PayPalButtons,  } from "@paypal/react-paypal-js";
+import { PayPalButtons } from "@paypal/react-paypal-js";
 import { useRouter } from 'next/navigation';
 import { useUserDetails } from "@/app/context/UserDetailsContext";
 
@@ -65,10 +65,8 @@ export default function BillingPage() {
         setSelectedPlan({ credits, price });
     };
 
-   
     /* eslint-disable @typescript-eslint/no-explicit-any */
-    const createOrder =
-    (data: any, actions: any) => {
+    const createOrder = (data: any, actions: any) => {
         return actions.order
             .create({
                 purchase_units: [
@@ -81,48 +79,38 @@ export default function BillingPage() {
                     },
                 ],
             })
-            .then((orderID: any) => {
+            .then((orderID: string) => {
                 return orderID;
             });
     }
 
-// const onPayPalSubmit: any = async () => {
-//     try {
-//         const response = await recordPaymentService({
-//             amount: 100,
-//         })
-//     } catch (err) {
-//         console.log('onPayPalSubmit', err)
-//     }
-// }
+    const onApprove = async (data: any, actions: any) => {
+        setIsProcessing(true);
+        return actions.order.capture().then(async function (details: any) {
+            const { payer } = details;
+            console.log(payer);
+            await fetch('/api/add-credits', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: userDetails.email,
+                    credits: selectedPlan?.credits
+                })
+            });
 
-const onApprove = async (data: any, actions: any) => {
-    setIsProcessing(true);
-    return actions.order.capture().then(async function (details: any) {
-        const { payer } = details;
-        console.log(payer);
-        await fetch('/api/add-credits', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                email: userDetails.email,
-                credits: selectedPlan?.credits
-            })
+            setUserDetails({
+                ...userDetails,
+                credits: userDetails.credits + (selectedPlan?.credits || 0)
+            });
+
+            setIsProcessing(false);
+            router.push('/dashboard?success=true');
+        }).catch((error: Error) => {
+            console.error('Payment error:', error);
+            setIsProcessing(false);
         });
-
-        setUserDetails({
-            ...userDetails,
-            credits: userDetails.credits + (selectedPlan?.credits || 0)
-        });
-
-        setIsProcessing(false);
-        router.push('/dashboard?success=true');
-    }).catch((error: Error) => {
-        console.error('Payment error:', error);
-        setIsProcessing(false);
-    });
-};
-/* eslint-enable @typescript-eslint/no-explicit-any */
+    };
+    /* eslint-enable @typescript-eslint/no-explicit-any */
 
     return (
         <div className="min-h-screen py-20 px-4">
@@ -222,13 +210,13 @@ const onApprove = async (data: any, actions: any) => {
                                 
                                 <div className="mb-4">
                                 <PayPalButtons
-                style={{ "layout": "vertical" }}
-                disabled={false}
-                forceReRender={[{ "layout": "vertical" }]}
-                fundingSource={undefined}
-                createOrder={createOrder}
-                onApprove={onApprove}
-            />
+                                    style={{ layout: "vertical" }}
+                                    disabled={isProcessing}
+                                    forceReRender={[selectedPlan.price, selectedPlan.credits]}
+                                    fundingSource={undefined}
+                                    createOrder={createOrder}
+                                    onApprove={onApprove}
+                                />
                                 </div>
                             </div>
                         </div>
