@@ -59,7 +59,7 @@ export default function BillingPage() {
     const router = useRouter();
     const { userDetails, setUserDetails } = useUserDetails();
     const [selectedPlan, setSelectedPlan] = useState<{credits: number, price: number} | null>(null);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [isProcessing] = useState(false);
 
     const handlePlanSelect = (credits: number, price: number) => {
         setSelectedPlan({ credits, price });
