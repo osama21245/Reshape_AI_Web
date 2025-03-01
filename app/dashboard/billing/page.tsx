@@ -2,9 +2,9 @@
 import { motion } from "framer-motion";
 import { Sparkles, Zap, Check } from "lucide-react";
 import { useState } from "react";
-import { PayPalButtons } from "@paypal/react-paypal-js";
-//import { useRouter } from 'next/navigation';
-
+import { PayPalButtons,  } from "@paypal/react-paypal-js";
+import { useRouter } from 'next/navigation';
+import { useUserDetails } from "@/app/context/UserDetailsContext";
 
 const plans = [
     {
@@ -56,54 +56,16 @@ const plans = [
 ];
 
 export default function BillingPage() {
-   // const router = useRouter();
-    //const { userDetails, setUserDetails } = useUserDetails();
+    const router = useRouter();
+    const { userDetails, setUserDetails } = useUserDetails();
     const [selectedPlan, setSelectedPlan] = useState<{credits: number, price: number} | null>(null);
-    const [isProcessing, 
-    //    setIsProcessing
-    ] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const handlePlanSelect = (credits: number, price: number) => {
         setSelectedPlan({ credits, price });
     };
 
-    // const handleApprove = async (data: OnApproveData, actions: OnApproveActions) => {
-    //     try {
-    //         setIsProcessing(true);
-    //         if (!actions?.order) return;
-
-    //         const response = await axios.post(`/api/orders/${data.orderID}/capture`, {
-    //             orderId: data.orderID
-    //         });
-            
-    //         if (response.status === 200) {
-    //             await fetch('/api/add-credits', {
-    //                 method: 'POST',
-    //                 headers: { 'Content-Type': 'application/json' },
-    //                 body: JSON.stringify({
-    //                     email: userDetails.email,
-    //                     credits: selectedPlan?.credits
-    //                 })
-    //             });
-
-    //             setUserDetails({
-    //                 ...userDetails,
-    //                 credits: userDetails.credits + (selectedPlan?.credits || 0)
-    //             });
-
-    //             router.push('/dashboard?success=true');
-    //         }
-    //     } catch (error) {
-    //         console.error('Payment processing error:', error);
-    //     } finally {
-    //         setIsProcessing(false);
-    //     }
-    // };
-
-    // const handleCancel = () => {
-    //     console.log("Cancelled");
-    // };
-
+   
     const createOrder =
     (data: any, actions: any) => {
         return actions.order
@@ -133,13 +95,25 @@ export default function BillingPage() {
 //     }
 // }
 
-const onApprove = (data: any, actions: any) => {
-    return actions.order.capture().then(function (details: any) {
+const onApprove = async (data: any, actions: any) => {
+    return actions.order.capture().then(async function (details: any) {
         const { payer } = details;
         console.log(payer);
-        //*perform db operations;
-        //*for Nextjs you can create an action like following
-        // onPayPalSubmit();
+        await fetch('/api/add-credits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: userDetails.email,
+                credits: selectedPlan?.credits
+            })
+        });
+
+        setUserDetails({
+            ...userDetails,
+            credits: userDetails.credits + (selectedPlan?.credits || 0)
+        });
+
+        router.push('/dashboard?success=true');
     });
 };
 
