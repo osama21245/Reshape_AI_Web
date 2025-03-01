@@ -59,13 +59,14 @@ export default function BillingPage() {
     const router = useRouter();
     const { userDetails, setUserDetails } = useUserDetails();
     const [selectedPlan, setSelectedPlan] = useState<{credits: number, price: number} | null>(null);
-    const [isProcessing] = useState(false);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     const handlePlanSelect = (credits: number, price: number) => {
         setSelectedPlan({ credits, price });
     };
 
    
+    // @ts-ignore
     const createOrder =
     (data: any, actions: any) => {
         return actions.order
@@ -95,6 +96,7 @@ export default function BillingPage() {
 //     }
 // }
 
+// @ts-ignore
 const onApprove = async (data: any, actions: any) => {
     return actions.order.capture().then(async function (details: any) {
         const { payer } = details;
@@ -214,6 +216,7 @@ const onApprove = async (data: any, actions: any) => {
                                 </div>
                                 
                                 <div className="mb-4">
+                                {/* @ts-ignore */}
                                 <PayPalButtons
                 style={{ "layout": "vertical" }}
                 disabled={false}
