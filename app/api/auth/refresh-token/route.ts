@@ -11,7 +11,7 @@ function generateSecureToken(length = 32) {
 }
 
 export async function POST(request: Request) {
-  return withApiAuth(request, async (user, req) => {
+  return withApiAuth(request, async (userId, req) => {
     try {
       // Get the device ID from the request
       const { deviceId } = await req.json();
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         .where(
           and(
             eq(DeviceLogin.id, parseInt(deviceId)),
-            eq(DeviceLogin.userId, user.id),
+            eq(DeviceLogin.userId, userId),
             eq(DeviceLogin.isActive, true)
           )
         )
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
       const [authToken] = await db
         .insert(AuthToken)
         .values({
-          userId: user.id,
+          userId: userId,
           token: token,
           expiresAt: expiresAt,
           isUsed: true, // Mark as used immediately since this is a refresh
