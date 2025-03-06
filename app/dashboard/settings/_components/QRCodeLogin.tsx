@@ -7,7 +7,6 @@ import { useUserDetails } from "@/app/context/UserDetailsContext";
 import toast from 'react-hot-toast';
 
 export default function QRCodeLogin() {
-  const { userDetails } = useUserDetails();
   const [qrData, setQrData] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { useUser } from "@clerk/nextjs";
-import { Zap, Smartphone } from "lucide-react";
+import { Zap } from "lucide-react";
 import Link from "next/link";
 import QRCodeLogin from "./_components/QRCodeLogin";
 import { useUserDetails } from "@/app/context/UserDetailsContext";

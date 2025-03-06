@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/config/db";
-import { User, AuthToken } from "@/config/schema";
+import {  AuthToken } from "@/config/schema";
 import { eq } from "drizzle-orm";
 
 // Simple endpoint for mobile app to authenticate with QR token

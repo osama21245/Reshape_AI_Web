@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { withApiAuth } from "../../auth/middleware";
 import { db } from "@/config/db";
-import { AiGeneratedImages, User, AuthToken } from "@/config/schema";
+import { AiGeneratedImages, User } from "@/config/schema";
 import { eq } from "drizzle-orm";
 
 // Endpoint for mobile app to get user data after QR authentication

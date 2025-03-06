@@ -10,7 +10,7 @@ function generateSecureToken(length = 32) {
   return crypto.randomBytes(length).toString('hex');
 }
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     // Get the authenticated user from Clerk
     const { userId } = await auth();
