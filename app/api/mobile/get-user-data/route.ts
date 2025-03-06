@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 
 // Endpoint for mobile app to get user data after QR authentication
 export async function GET(request: Request) {
-  return withApiAuth(request, async (userid, req) => {
+  return withApiAuth(request, async (userid) => {
     try {
       // Get user's profile data
       const user = await db

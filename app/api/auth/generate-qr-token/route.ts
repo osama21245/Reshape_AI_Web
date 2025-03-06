@@ -50,7 +50,7 @@ export async function POST() {
 
       try {
         // Store the token in the database
-        const [authToken] = await db
+         await db
           .insert(AuthToken)
           .values({
             userId: dbUser.id,

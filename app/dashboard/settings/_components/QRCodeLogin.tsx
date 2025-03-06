@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { Smartphone, RefreshCw, AlertCircle } from "lucide-react";
-import { useUserDetails } from "@/app/context/UserDetailsContext";
 import toast from 'react-hot-toast';
 
 export default function QRCodeLogin() {
