@@ -1,13 +1,15 @@
 "use client";
 import { motion } from "framer-motion";
 import { useUser } from "@clerk/nextjs";
-import { Zap } from "lucide-react";
+import { Zap, Smartphone } from "lucide-react";
 import Link from "next/link";
+import QRCodeLogin from "./_components/QRCodeLogin";
+import { useUserDetails } from "@/app/context/UserDetailsContext";
 
 export default function SettingsPage() {
     const { user } = useUser();
+    const { userDetails } = useUserDetails();
    
-
     return (
         <div className="min-h-screen py-20 px-4">
             <div className="max-w-4xl mx-auto space-y-12">
@@ -51,8 +53,6 @@ export default function SettingsPage() {
                                 className="w-full bg-white/5 rounded-xl border border-white/10 px-4 py-3"
                             />
                         </div>
-
-                     
                     </div>
 
                     <div className="border-t border-white/10 pt-8">
@@ -64,7 +64,7 @@ export default function SettingsPage() {
                                 </div>
                                 <div>
                                     <p className="font-medium">Available Credits</p>
-                                    <p className="text-sm text-gray-400">3 credits remaining</p>
+                                    <p className="text-sm text-gray-400">{userDetails.credits} credits remaining</p>
                                 </div>
                             </div>
                             <Link href="/dashboard/billing">
@@ -77,6 +77,11 @@ export default function SettingsPage() {
                                 </motion.button>
                             </Link>
                         </div>
+                    </div>
+
+                    {/* Mobile App Login Section */}
+                    <div className="border-t border-white/10 pt-8">
+                        <QRCodeLogin />
                     </div>
 
                     <div className="pt-4 border-t border-white/10">
