@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -354,7 +355,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
 
     try {
       controller.scannedDataStream.listen((scanData) {
-        print('scanData: ${scanData.code.toString()}');
+        print('scanData: ${scanData.code}');
         if (isScanning && scanData.code != null) {
           setState(() {
             isScanning = false;
@@ -362,11 +363,36 @@ class _QrScanScreenState extends State<QrScanScreen> {
           });
           controller.pauseCamera();
 
-          // Auto authenticate
-          setState(() {
-            isProcessing = true;
-          });
-          context.read<AuthCubit>().scanQrCode(scanData.code!);
+          try {
+            // Parse the JSON data from the QR code
+            final jsonData = jsonDecode(scanData.code!);
+
+            // Extract the token from the parsed JSON
+            final token = jsonData['token'];
+
+            if (token != null) {
+              // Auto authenticate with the token
+              setState(() {
+                isProcessing = true;
+              });
+
+              print('Using token: $token');
+              context.read<AuthCubit>().scanQrCode(token);
+            } else {
+              setState(() {
+                errorMessage = 'Invalid QR code: token not found';
+                isScanning = true;
+              });
+              controller.resumeCamera();
+            }
+          } catch (e) {
+            print('Error parsing QR code: $e');
+            setState(() {
+              errorMessage = 'Invalid QR code format';
+              isScanning = true;
+            });
+            controller.resumeCamera();
+          }
         }
       });
     } catch (e) {

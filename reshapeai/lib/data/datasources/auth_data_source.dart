@@ -44,7 +44,7 @@ class AuthDataSourceImpl implements AuthDataSource {
       // Step 2: Get user data using the user ID
       final userResponse = await dio.post(
         '/api/mobile/get-user-data',
-        data: {'userId': userId},
+        data: {'userId': userId, 'token': token},
       );
 
       if (userResponse.statusCode != 200) {
@@ -81,17 +81,47 @@ class AuthDataSourceImpl implements AuthDataSource {
         return null;
       }
 
-      // Get the stored user ID (we'll need to save this in loginWithQrCode)
+      // Get the stored user ID
       final userId = await secureStorage.read(key: 'user_id');
 
       if (userId == null) {
         return null;
       }
 
-      // Get user data using the user ID
+      // Try GET method first with query parameters and Authorization header
+      try {
+        final response = await dio.get(
+          '/api/mobile/get-user-data',
+          queryParameters: {'userId': 2},
+          options: Options(
+            headers: {
+              'Authorization':
+                  'Bearer 268dd25e1370a0a814bfe6910914b0b0e898b18945690ad32c1430aca9e978ad'
+            },
+          ),
+        );
+
+        if (response.statusCode == 200) {
+          final userData = response.data['user'];
+
+          // Create and return user model
+          return UserModel(
+            id: userData['id'].toString(),
+            name: userData['name'],
+            email: userData['email'],
+            profileImage: userData['image'],
+            createdAt: DateTime.now(),
+          );
+        }
+      } catch (e) {
+        print('Error with GET method: $e');
+        // Fall back to POST method
+      }
+
+      // Fall back to POST method with token in request body
       final response = await dio.post(
         '/api/mobile/get-user-data',
-        data: {'userId': userId},
+        data: {'userId': userId, 'token': token},
       );
 
       if (response.statusCode != 200) {

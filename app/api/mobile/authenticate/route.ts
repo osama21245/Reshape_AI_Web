@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/config/db";
-import {  AuthToken } from "@/config/schema";
+import { AuthToken } from "@/config/schema";
 import { eq } from "drizzle-orm";
 
-// Simple endpoint for mobile app to authenticate with QR token
+// Endpoint for mobile app to authenticate with QR token
 export async function POST(request: Request) {
   try {
     const { token } = await request.json();
@@ -23,6 +23,19 @@ export async function POST(request: Request) {
 
     if (!authToken || authToken.length === 0) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    // Check if token is expired
+    if (new Date(authToken[0].expiresAt) < new Date()) {
+      return NextResponse.json({ error: "Token has expired" }, { status: 401 });
+    }
+
+    // Mark token as used if it's not already
+    if (!authToken[0].isUsed) {
+      await db
+        .update(AuthToken)
+        .set({ isUsed: true })
+        .where(eq(AuthToken.id, authToken[0].id));
     }
 
     // Return the user ID and token
