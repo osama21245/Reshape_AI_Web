@@ -60,7 +60,7 @@ export async function GET(request: Request) {
     if (new Date(authToken[0].expiresAt) < new Date()) {
       return NextResponse.json(
         { error: "Token has expired" },
-        { status: 401 }
+        { status: 603 }
       );
     }
 

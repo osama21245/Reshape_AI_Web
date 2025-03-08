@@ -351,7 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
               return _buildTransformationShimmer();
             }
 
-            if (state.status == TransformationStatus.loaded) {
+            if (state.status == TransformationStatus.success) {
               if (state.transformations.isEmpty) {
                 return _buildEmptyTransformations();
               }

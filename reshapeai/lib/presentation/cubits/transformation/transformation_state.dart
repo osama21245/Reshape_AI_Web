@@ -4,7 +4,7 @@ import 'package:reshapeai/domain/entities/transformation.dart';
 enum TransformationStatus {
   initial,
   loading,
-  loaded,
+  success,
   error,
 }
 

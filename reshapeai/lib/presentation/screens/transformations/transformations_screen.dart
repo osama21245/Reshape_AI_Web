@@ -44,7 +44,7 @@ class _TransformationsScreenState extends State<TransformationsScreen> {
         builder: (context, state) {
           if (state.status == TransformationStatus.loading) {
             return _buildLoadingState();
-          } else if (state.status == TransformationStatus.loaded) {
+          } else if (state.status == TransformationStatus.success) {
             if (state.transformations.isEmpty) {
               return _buildEmptyState();
             }

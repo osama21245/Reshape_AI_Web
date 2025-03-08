@@ -1,31 +1,28 @@
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:reshapeai/domain/usecases/transformation/create_transformation_usecase.dart';
-import 'package:reshapeai/domain/usecases/transformation/get_transformations_usecase.dart';
+import 'package:reshapeai/data/datasources/transformation_data_source.dart';
+import 'package:reshapeai/data/models/transformation_model.dart';
 import 'package:reshapeai/presentation/cubits/transformation/transformation_state.dart';
 
 class TransformationCubit extends Cubit<TransformationState> {
-  final GetTransformationsUseCase _getTransformationsUseCase;
-  final CreateTransformationUseCase _createTransformationUseCase;
+  final TransformationDataSource transformationDataSource;
 
   TransformationCubit({
-    required GetTransformationsUseCase getTransformationsUseCase,
-    required CreateTransformationUseCase createTransformationUseCase,
-  })  : _getTransformationsUseCase = getTransformationsUseCase,
-        _createTransformationUseCase = createTransformationUseCase,
-        super(const TransformationState.initial());
+    required this.transformationDataSource,
+  }) : super(const TransformationState());
 
   Future<void> fetchTransformations() async {
     emit(state.copyWith(status: TransformationStatus.loading));
 
     try {
-      final transformations = await _getTransformationsUseCase();
+      final transformations =
+          await transformationDataSource.getTransformations();
+
       emit(state.copyWith(
-        status: TransformationStatus.loaded,
+        status: TransformationStatus.success,
         transformations: transformations,
       ));
     } catch (e) {
-      print('Fetch Transformations Error: $e');
       emit(state.copyWith(
         status: TransformationStatus.error,
         error: e.toString(),
@@ -40,7 +37,8 @@ class TransformationCubit extends Cubit<TransformationState> {
     emit(state.copyWith(uploadStatus: TransformationUploadStatus.loading));
 
     try {
-      final newTransformation = await _createTransformationUseCase(
+      final newTransformation =
+          await transformationDataSource.createTransformation(
         originalImage,
         style,
       );
@@ -56,7 +54,6 @@ class TransformationCubit extends Cubit<TransformationState> {
         transformations: updatedTransformations,
       ));
     } catch (e) {
-      print('Upload Transformation Error: $e');
       emit(state.copyWith(
         uploadStatus: TransformationUploadStatus.error,
         uploadError: e.toString(),

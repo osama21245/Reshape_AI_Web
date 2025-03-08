@@ -1,97 +1,80 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:reshapeai/domain/entities/user.dart';
-import 'package:reshapeai/domain/usecases/auth/get_current_user_usecase.dart';
-import 'package:reshapeai/domain/usecases/auth/get_token_usecase.dart';
-import 'package:reshapeai/domain/usecases/auth/logout_usecase.dart';
-import 'package:reshapeai/domain/usecases/auth/scan_qr_usecase.dart';
+import 'package:reshapeai/data/datasources/auth_data_source.dart';
+import 'package:reshapeai/data/models/transformation_model.dart';
+import 'package:reshapeai/data/models/user_model.dart';
 import 'package:reshapeai/presentation/cubits/auth/auth_state.dart';
 
 class AuthCubit extends Cubit<AuthState> {
-  final ScanQrUseCase _scanQrUseCase;
-  final LogoutUseCase _logoutUseCase;
-  final GetCurrentUserUseCase _getCurrentUserUseCase;
-  final GetTokenUseCase _getTokenUseCase;
+  final AuthDataSource authDataSource;
 
   AuthCubit({
-    required ScanQrUseCase scanQrUseCase,
-    required LogoutUseCase logoutUseCase,
-    required GetCurrentUserUseCase getCurrentUserUseCase,
-    required GetTokenUseCase getTokenUseCase,
-  })  : _scanQrUseCase = scanQrUseCase,
-        _logoutUseCase = logoutUseCase,
-        _getCurrentUserUseCase = getCurrentUserUseCase,
-        _getTokenUseCase = getTokenUseCase,
-        super(const AuthState());
+    required this.authDataSource,
+  }) : super(const AuthState());
 
-  // We're keeping the login and register methods for backward compatibility,
-  // but they're not used in the QR code authentication flow
-  Future<void> login(String email, String password) async {
+  Future<void> scanQrCode(String qrToken) async {
     emit(state.copyWith(status: AuthStatus.loading));
 
     try {
-      // For demo purposes, just check if email contains '@'
-      if (!email.contains('@')) {
-        emit(state.copyWith(
-          status: AuthStatus.error,
-          errorMessage: 'Invalid email format',
-        ));
-        return;
-      }
+      print('AuthCubit: Scanning QR code with token: $qrToken');
 
-      // Simulate successful login
+      // Use the data source to authenticate with QR code
+      final result = await authDataSource.loginWithQrCode(qrToken);
+
+      // Extract user and transformations from the result
+      final user = result['user'] as UserModel;
+      final token = result['token'] as String;
+      final transformations =
+          result['transformations'] as List<TransformationModel>;
+
+      // Update the state with the authenticated user
       emit(state.copyWith(
         status: AuthStatus.authenticated,
-        user: User(
-          id: '1',
-          name: 'Demo User',
-          email: email,
-          createdAt: DateTime.now(),
-        ),
+        user: user,
+        token: token,
+        transformations: transformations,
       ));
+
+      print('AuthCubit: Authentication successful');
     } catch (e) {
+      print('AuthCubit: Authentication error: $e');
+
       emit(state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: 'Failed to authenticate: ${e.toString()}',
       ));
     }
   }
 
-  Future<void> register(String name, String email, String password) async {
-    emit(state.copyWith(status: AuthStatus.loading));
+  // Future<void> refreshToken() async {
+  //   try {
+  //     // Don't change the state to loading to avoid UI flicker
+  //     final deviceId =
+  //         await authDataSource.secureStorage.read(key: 'device_id');
 
-    try {
-      // For demo purposes, just check if email contains '@'
-      if (!email.contains('@')) {
-        emit(state.copyWith(
-          status: AuthStatus.error,
-          errorMessage: 'Invalid email format',
-        ));
-        return;
-      }
+  //     if (deviceId != null) {
+  //       print('AuthCubit: Refreshing token for device: $deviceId');
 
-      // Simulate successful registration
-      emit(state.copyWith(
-        status: AuthStatus.authenticated,
-        user: User(
-          id: '1',
-          name: name,
-          email: email,
-          createdAt: DateTime.now(),
-        ),
-      ));
-    } catch (e) {
-      emit(state.copyWith(
-        status: AuthStatus.error,
-        errorMessage: e.toString(),
-      ));
-    }
-  }
+  //       final result = await authDataSource.refreshToken(deviceId);
+  //       final newToken = result['token'] as String;
+
+  //       // Update the token in the state
+  //       emit(state.copyWith(token: newToken));
+
+  //       print('AuthCubit: Token refreshed successfully');
+  //     } else {
+  //       print('AuthCubit: No device ID found, cannot refresh token');
+  //     }
+  //   } catch (e) {
+  //     print('AuthCubit: Token refresh error: $e');
+  //     // Don't update the state on error to avoid disrupting the user experience
+  //   }
+  // }
 
   Future<void> logout() async {
     emit(state.copyWith(status: AuthStatus.loading));
 
     try {
-      await _logoutUseCase();
+      await authDataSource.logout();
       emit(const AuthState(status: AuthStatus.unauthenticated));
     } catch (e) {
       emit(state.copyWith(
@@ -105,15 +88,27 @@ class AuthCubit extends Cubit<AuthState> {
     emit(state.copyWith(status: AuthStatus.loading));
 
     try {
-      final user = await _getCurrentUserUseCase();
-      final token = await _getTokenUseCase();
+      final result = await authDataSource.getCurrentUser();
 
-      if (user != null && token != null) {
-        emit(state.copyWith(
-          status: AuthStatus.authenticated,
-          user: user,
-          token: token,
-        ));
+      if (result != null) {
+        final user = result['user'] as UserModel;
+        final token = await authDataSource.getToken();
+        final transformations =
+            result['transformations'] as List<TransformationModel>;
+
+        if (token != null) {
+          emit(state.copyWith(
+            status: AuthStatus.authenticated,
+            user: user,
+            token: token,
+            transformations: transformations,
+          ));
+
+          // Schedule a token refresh if needed
+          //   refreshToken();
+        } else {
+          emit(const AuthState(status: AuthStatus.unauthenticated));
+        }
       } else {
         emit(const AuthState(status: AuthStatus.unauthenticated));
       }
@@ -121,33 +116,6 @@ class AuthCubit extends Cubit<AuthState> {
       emit(state.copyWith(
         status: AuthStatus.error,
         errorMessage: e.toString(),
-      ));
-    }
-  }
-
-  Future<void> scanQrCode(String qrToken) async {
-    emit(state.copyWith(status: AuthStatus.loading));
-
-    try {
-      final result = await _scanQrUseCase(qrToken);
-      final user = result['user'];
-
-      emit(state.copyWith(
-        status: AuthStatus.authenticated,
-        user: User(
-          id: user['id'],
-          name: user['name'],
-          email: user['email'],
-          profileImage: user['image'],
-          createdAt: DateTime.now(), // API doesn't return createdAt
-        ),
-        token: await _getTokenUseCase(),
-      ));
-    } catch (e) {
-      print('QR Authentication Error: $e');
-      emit(state.copyWith(
-        status: AuthStatus.error,
-        errorMessage: 'Failed to authenticate: ${e.toString()}',
       ));
     }
   }

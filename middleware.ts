@@ -5,8 +5,9 @@ const isPublicRoute = createRouteMatcher([
   "/", 
   "/sign-up(.*)",
   "/api/mobile/(.*)",
-  "/api/auth/mobile-login",
-  "/api/auth/generate-qr-token"
+  "/api/auth/device-login",
+  "/api/auth/generate-qr-token",
+  "/api/auth/refresh-token"
 ])
 
 export default clerkMiddleware(async (auth, request) => {

@@ -22,47 +22,30 @@ class TransformationDataSourceImpl implements TransformationDataSource {
   Future<List<TransformationModel>> getTransformations() async {
     try {
       final token = await secureStorage.read(key: 'auth_token');
-      if (token == null) {
-        throw Exception('Authentication token not found');
+      final userId = await secureStorage.read(key: 'user_id');
+
+      if (token == null || userId == null) {
+        throw Exception('Authentication token or user ID not found');
       }
 
-      // Get user email from profile
-      final userResponse = await dio.get(
-        '/api/mobile/user-profile',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      if (userResponse.statusCode != 200) {
-        throw Exception('Failed to get user profile');
-      }
-
-      final userEmail = userResponse.data['user']['email'];
-
-      // Get transformations using email
       final response = await dio.get(
-        '/api/transformations',
-        queryParameters: {'email': userEmail},
+        '/api/mobile/get-user-data',
+        queryParameters: {'userId': userId},
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> transformationsData = response.data;
-        return transformationsData
-            .map((data) => TransformationModel.fromJson({
-                  'id': data['id'],
-                  'userId': userEmail, // Using email as userId
-                  'originalImageUrl': data['originalImageUrl'],
-                  'transformedImageUrl': data['aiGeneratedImageUrl'],
-                  'style': data['style'],
-                  'createdAt': data['createdAt'],
-                }))
-            .toList();
+        final transformations = <TransformationModel>[];
+        if (response.data['transformations'] != null) {
+          for (var item in response.data['transformations']) {
+            transformations.add(TransformationModel.fromJson(item));
+          }
+        }
+        return transformations;
       } else {
-        throw Exception('Failed to load transformations');
+        throw Exception('Failed to get transformations');
       }
     } catch (e) {
       throw Exception('Error fetching transformations: ${e.toString()}');
@@ -74,23 +57,11 @@ class TransformationDataSourceImpl implements TransformationDataSource {
       File image, String style) async {
     try {
       final token = await secureStorage.read(key: 'auth_token');
-      if (token == null) {
-        throw Exception('Authentication token not found');
+      final userId = await secureStorage.read(key: 'user_id');
+
+      if (token == null || userId == null) {
+        throw Exception('Authentication token or user ID not found');
       }
-
-      // Get user email from profile
-      final userResponse = await dio.get(
-        '/api/mobile/user-profile',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      if (userResponse.statusCode != 200) {
-        throw Exception('Failed to get user profile');
-      }
-
-      final userEmail = userResponse.data['user']['email'];
 
       // First upload the image to get a URL
       final formData = FormData.fromMap({
@@ -101,7 +72,7 @@ class TransformationDataSourceImpl implements TransformationDataSource {
         ),
       });
 
-      // Assuming there's an upload endpoint
+      // Upload the image
       final uploadResponse = await dio.post(
         '/api/upload-image',
         data: formData,
@@ -119,7 +90,7 @@ class TransformationDataSourceImpl implements TransformationDataSource {
 
       final imageUrl = uploadResponse.data['url'];
 
-      // Now generate the transformation
+      // Generate the transformation
       final response = await dio.post(
         '/api/generate-photo',
         data: {
@@ -127,7 +98,7 @@ class TransformationDataSourceImpl implements TransformationDataSource {
           'roomType': 'room', // Default room type
           'style': style,
           'customization': '', // Optional customization
-          'userEmail': userEmail,
+          'userId': userId,
         },
         options: Options(
           headers: {
@@ -137,14 +108,14 @@ class TransformationDataSourceImpl implements TransformationDataSource {
       );
 
       if (response.statusCode == 200) {
-        return TransformationModel.fromJson({
-          'id': response.data['id'],
-          'userId': userEmail,
-          'originalImageUrl': imageUrl,
-          'transformedImageUrl': response.data['url'],
-          'style': style,
-          'createdAt': DateTime.now().toIso8601String(),
-        });
+        return TransformationModel(
+          id: response.data['id'].toString(),
+          userId: userId,
+          originalImageUrl: imageUrl,
+          transformedImageUrl: response.data['url'],
+          style: style,
+          createdAt: DateTime.now(),
+        );
       } else {
         throw Exception('Failed to create transformation');
       }

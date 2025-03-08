@@ -1,19 +1,24 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:reshapeai/data/models/transformation_model.dart';
 import 'package:reshapeai/data/models/user_model.dart';
 
 abstract class AuthDataSource {
   Future<Map<String, dynamic>> loginWithQrCode(String qrToken);
   Future<void> logout();
-  Future<UserModel?> getCurrentUser();
+  Future<Map<String, dynamic>?> getCurrentUser();
   Future<String?> getToken();
   Future<void> saveToken(String token);
   Future<void> deleteToken();
+  Future<Map<String, dynamic>> registerDevice(String token);
+  Future<Map<String, dynamic>> refreshToken(String deviceId);
 }
 
 class AuthDataSourceImpl implements AuthDataSource {
   final Dio dio;
   final FlutterSecureStorage secureStorage;
+  final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
 
   AuthDataSourceImpl({
     required this.dio,
@@ -23,6 +28,9 @@ class AuthDataSourceImpl implements AuthDataSource {
   @override
   Future<Map<String, dynamic>> loginWithQrCode(String qrToken) async {
     try {
+      print(
+          'AuthDataSource: Attempting to authenticate with QR token: $qrToken');
+
       // Step 1: Authenticate with QR token
       final authResponse = await dio.post(
         '/api/mobile/authenticate',
@@ -41,7 +49,18 @@ class AuthDataSourceImpl implements AuthDataSource {
       final userId = authResponse.data['userId'];
       await secureStorage.write(key: 'user_id', value: userId.toString());
 
-      // Step 2: Get user data using the user ID
+      // Step 2: Register the device
+      final deviceResponse = await registerDevice(token);
+
+      // Save the device ID for future token refreshes
+      if (deviceResponse['deviceLogin'] != null &&
+          deviceResponse['deviceLogin']['id'] != null) {
+        await secureStorage.write(
+            key: 'device_id',
+            value: deviceResponse['deviceLogin']['id'].toString());
+      }
+
+      // Step 3: Get user data using the user ID
       final userResponse = await dio.post(
         '/api/mobile/get-user-data',
         data: {'userId': userId, 'token': token},
@@ -51,10 +70,32 @@ class AuthDataSourceImpl implements AuthDataSource {
         throw Exception('Failed to get user data: ${userResponse.statusCode}');
       }
 
-      print('AuthDataSource: User data retrieved ${userResponse.data}');
+      final userData = userResponse.data['user'];
+
+      // Parse transformations
+      final transformations = <TransformationModel>[];
+      if (userResponse.data['transformations'] != null) {
+        for (var item in userResponse.data['transformations']) {
+          transformations.add(TransformationModel.fromJson(item));
+        }
+      }
+
+      // Create user model
+      final user = UserModel(
+        id: userData['id'].toString(),
+        name: userData['name'],
+        email: userData['email'],
+        profileImage: userData['image'],
+        credits: userData['credits'],
+        createdAt: DateTime.now(),
+      );
 
       // Return combined data
-      return {'token': token, 'user': userResponse.data['user']};
+      return {
+        'token': token,
+        'user': user,
+        'transformations': transformations,
+      };
     } catch (e) {
       print('AuthDataSource: Error in loginWithQrCode: $e');
       throw Exception('Login failed: $e');
@@ -62,19 +103,83 @@ class AuthDataSourceImpl implements AuthDataSource {
   }
 
   @override
+  Future<Map<String, dynamic>> registerDevice(String token) async {
+    try {
+      // Get device information
+      String deviceName = 'Unknown Device';
+      String deviceLocation = 'Mobile App';
+
+      final androidInfo = await deviceInfo.androidInfo;
+      deviceName = '${androidInfo.brand} ${androidInfo.model}';
+
+      // Register the device
+      final response = await dio.post(
+        '/api/auth/device-login',
+        data: {
+          'token': token,
+          'deviceName': deviceName,
+          'deviceLocation': deviceLocation
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print('Device registered successfully: ${response.data}');
+        return response.data;
+      } else {
+        throw Exception('Failed to register device: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error registering device: $e');
+      throw Exception('Device registration failed: $e');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> refreshToken(String deviceId) async {
+    try {
+      final token = await getToken();
+
+      if (token == null) {
+        throw Exception('No token available for refresh');
+      }
+
+      final response = await dio.post(
+        '/api/auth/refresh-token',
+        data: {'deviceId': deviceId},
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        // Save the new token
+        final newToken = response.data['token'];
+        await saveToken(newToken);
+
+        return response.data;
+      } else {
+        throw Exception('Failed to refresh token: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error refreshing token: $e');
+      throw Exception('Token refresh failed: $e');
+    }
+  }
+
+  @override
   Future<void> logout() async {
     try {
-      // No need to call an API endpoint for logout as per the API structure
-      await deleteToken();
+      await secureStorage.delete(key: 'auth_token');
+      await secureStorage.delete(key: 'user_id');
+      await secureStorage.delete(key: 'device_id');
     } catch (e) {
       throw Exception('Logout error: ${e.toString()}');
     }
   }
 
   @override
-  Future<UserModel?> getCurrentUser() async {
+  Future<Map<String, dynamic>?> getCurrentUser() async {
     try {
-      // Get the stored token
       final token = await getToken();
 
       if (token == null) {
@@ -88,58 +193,57 @@ class AuthDataSourceImpl implements AuthDataSource {
         return null;
       }
 
-      // Try GET method first with query parameters and Authorization header
-      try {
-        final response = await dio.get(
-          '/api/mobile/get-user-data',
-          queryParameters: {'userId': 2},
-          options: Options(
-            headers: {
-              'Authorization':
-                  'Bearer 268dd25e1370a0a814bfe6910914b0b0e898b18945690ad32c1430aca9e978ad'
-            },
-          ),
+      // Check if token needs refresh
+      final deviceId = await secureStorage.read(key: 'device_id');
+      if (deviceId != null) {
+        try {
+          // Try to refresh the token
+          await refreshToken(deviceId);
+        } catch (e) {
+          print('Token refresh failed, continuing with existing token: $e');
+        }
+      }
+
+      // Get user data
+      final response = await dio.get(
+        '/api/mobile/get-user-data',
+        queryParameters: {'userId': userId},
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final userData = response.data['user'];
+
+        // Parse transformations
+        final transformations = <TransformationModel>[];
+        if (response.data['transformations'] != null) {
+          for (var item in response.data['transformations']) {
+            transformations.add(TransformationModel.fromJson(item));
+          }
+        }
+
+        // Create user model
+        final user = UserModel(
+          id: userData['id'].toString(),
+          name: userData['name'],
+          email: userData['email'],
+          profileImage: userData['image'],
+          credits: userData['credits'],
+          createdAt: DateTime.now(),
         );
 
-        if (response.statusCode == 200) {
-          final userData = response.data['user'];
-
-          // Create and return user model
-          return UserModel(
-            id: userData['id'].toString(),
-            name: userData['name'],
-            email: userData['email'],
-            profileImage: userData['image'],
-            createdAt: DateTime.now(),
-          );
-        }
-      } catch (e) {
-        print('Error with GET method: $e');
-        // Fall back to POST method
+        // Return both user and transformations
+        return {
+          'user': user,
+          'transformations': transformations,
+        };
       }
 
-      // Fall back to POST method with token in request body
-      final response = await dio.post(
-        '/api/mobile/get-user-data',
-        data: {'userId': userId, 'token': token},
-      );
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to get user data');
-      }
-
-      final userData = response.data['user'];
-
-      // Create and return user model
-      return UserModel(
-        id: userData['id'].toString(),
-        name: userData['name'],
-        email: userData['email'],
-        profileImage: userData['image'],
-        createdAt: DateTime.now(),
-      );
+      return null;
     } catch (e) {
-      print('Error getting current user: $e');
+      print('AuthDataSource: Error in getCurrentUser: $e');
       return null;
     }
   }

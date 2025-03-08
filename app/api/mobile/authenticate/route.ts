@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
     // Check if token is expired
     if (new Date(authToken[0].expiresAt) < new Date()) {
-      return NextResponse.json({ error: "Token has expired" }, { status: 401 });
+      return NextResponse.json({ error: "Token has expired" }, { status:  603 });
     }
 
     // Mark token as used if it's not already

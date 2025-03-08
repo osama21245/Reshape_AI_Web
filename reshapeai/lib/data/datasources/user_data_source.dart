@@ -1,10 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:reshapeai/data/models/transformation_model.dart';
 import 'package:reshapeai/data/models/user_model.dart';
 
 abstract class UserDataSource {
-  Future<UserModel> getUserDetails();
-  Future<UserModel> updateUserProfile({String? name, String? profileImage});
+  Future<Map<String, dynamic>> getUserDetails();
+  Future<Map<String, dynamic>> updateUserProfile(
+      {String? name, String? profileImage});
 }
 
 class UserDataSourceImpl implements UserDataSource {
@@ -17,22 +19,49 @@ class UserDataSourceImpl implements UserDataSource {
   });
 
   @override
-  Future<UserModel> getUserDetails() async {
+  Future<Map<String, dynamic>> getUserDetails() async {
     try {
       final token = await secureStorage.read(key: 'auth_token');
-      if (token == null) {
-        throw Exception('Authentication token not found');
+      final userId = await secureStorage.read(key: 'user_id');
+
+      if (token == null || userId == null) {
+        throw Exception('Authentication token or user ID not found');
       }
 
       final response = await dio.get(
-        '/api/mobile/user-profile',
+        '/api/mobile/get-user-data',
+        queryParameters: {'userId': userId},
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
       );
 
       if (response.statusCode == 200) {
-        return UserModel.fromJson(response.data['user']);
+        final userData = response.data['user'];
+
+        // Parse transformations
+        final transformations = <TransformationModel>[];
+        if (response.data['transformations'] != null) {
+          for (var item in response.data['transformations']) {
+            transformations.add(TransformationModel.fromJson(item));
+          }
+        }
+
+        // Create user model
+        final user = UserModel(
+          id: userData['id'].toString(),
+          name: userData['name'],
+          email: userData['email'],
+          profileImage: userData['image'],
+          credits: userData['credits'],
+          createdAt: DateTime.now(),
+        );
+
+        // Return both user and transformations
+        return {
+          'user': user,
+          'transformations': transformations,
+        };
       } else {
         throw Exception('Failed to get user details');
       }
@@ -42,18 +71,20 @@ class UserDataSourceImpl implements UserDataSource {
   }
 
   @override
-  Future<UserModel> updateUserProfile(
+  Future<Map<String, dynamic>> updateUserProfile(
       {String? name, String? profileImage}) async {
     try {
       final token = await secureStorage.read(key: 'auth_token');
-      if (token == null) {
-        throw Exception('Authentication token not found');
+      final userId = await secureStorage.read(key: 'user_id');
+
+      if (token == null || userId == null) {
+        throw Exception('Authentication token or user ID not found');
       }
 
-      // Since there's no direct endpoint for updating user profile in the mobile API,
-      // we'll just return the current user details
+      // For now, we'll just fetch the user data again since the API doesn't support profile updates yet
       final response = await dio.get(
-        '/api/mobile/user-profile',
+        '/api/mobile/get-user-data',
+        queryParameters: {'userId': userId},
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
@@ -62,15 +93,29 @@ class UserDataSourceImpl implements UserDataSource {
       if (response.statusCode == 200) {
         final userData = response.data['user'];
 
-        // Create a new user model with the updated fields
-        return UserModel.fromJson({
-          'id': userData['id'],
-          'name': name ?? userData['name'],
-          'email': userData['email'],
-          'profileImage': profileImage ?? userData['image'],
-          'createdAt':
-              userData['createdAt'] ?? DateTime.now().toIso8601String(),
-        });
+        // Parse transformations
+        final transformations = <TransformationModel>[];
+        if (response.data['transformations'] != null) {
+          for (var item in response.data['transformations']) {
+            transformations.add(TransformationModel.fromJson(item));
+          }
+        }
+
+        // Create user model with updated fields
+        final user = UserModel(
+          id: userData['id'].toString(),
+          name: name ?? userData['name'],
+          email: userData['email'],
+          profileImage: profileImage ?? userData['image'],
+          credits: userData['credits'],
+          createdAt: DateTime.now(),
+        );
+
+        // Return both user and transformations
+        return {
+          'user': user,
+          'transformations': transformations,
+        };
       } else {
         throw Exception('Failed to update user profile');
       }
