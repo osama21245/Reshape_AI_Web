@@ -37,6 +37,7 @@ export default function QRCodeLogin() {
       const qrCodeData = JSON.stringify({
         token: data.token,
         userId: data.userId,
+        expiresAt: data.expiresAt,
         appId: "reshape-ai-mobile", // Identifier for your mobile app
       });
       
