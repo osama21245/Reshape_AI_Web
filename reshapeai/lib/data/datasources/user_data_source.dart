@@ -3,8 +3,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:reshapeai/data/models/transformation_model.dart';
 import 'package:reshapeai/data/models/user_model.dart';
 
+import '../../core/erorr/custom_errors/token_expired_exception.dart';
+
 abstract class UserDataSource {
-  Future<Map<String, dynamic>> getUserDetails();
+  Future<Map<String, dynamic>?> getUserDetails();
   Future<Map<String, dynamic>> updateUserProfile(
       {String? name, String? profileImage});
   Future<Map<String, dynamic>> refreshToken();
@@ -20,22 +22,35 @@ class UserDataSourceImpl implements UserDataSource {
   });
 
   @override
-  Future<Map<String, dynamic>> getUserDetails() async {
+  Future<Map<String, dynamic>?> getUserDetails() async {
     try {
       final token = await secureStorage.read(key: 'auth_token');
-      final userId = await secureStorage.read(key: 'user_id');
 
-      if (token == null || userId == null) {
-        throw Exception('Authentication token or user ID not found');
+      if (token == null) {
+        return null;
       }
 
-      final response = await dio.get(
+      // Get the stored user ID
+      final userId = await secureStorage.read(key: 'user_id');
+
+      if (userId == null) {
+        return null;
+      }
+
+      print('AuthDataSource: User ID: $userId');
+      print('AuthDataSource: Token: $token');
+
+      // Get user data
+      final response = await dio.post(
         '/api/mobile/get-user-data',
-        queryParameters: {'userId': userId},
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        data: {'userId': userId, 'token': token},
       );
+
+      print('AuthDataSource: Response: ${response.data}');
+
+      if (response.statusCode == 603) {
+        throw TokenExpiredException();
+      }
 
       if (response.statusCode == 200) {
         final userData = response.data['user'];
@@ -63,11 +78,12 @@ class UserDataSourceImpl implements UserDataSource {
           'user': user,
           'transformations': transformations,
         };
-      } else {
-        throw Exception('Failed to get user details');
       }
+
+      return null;
     } catch (e) {
-      throw Exception('Error fetching user details: ${e.toString()}');
+      print('AuthDataSource: Error in getCurrentUser: $e');
+      return null;
     }
   }
 

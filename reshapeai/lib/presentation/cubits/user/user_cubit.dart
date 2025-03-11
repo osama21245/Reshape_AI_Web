@@ -13,12 +13,16 @@ class UserCubit extends Cubit<UserState> {
     required this.userDataSource,
   }) : super(const UserState.initial());
 
-  FlutterSecureStorage secureStorage = FlutterSecureStorage();
+  FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
   Future<void> getUserDetails() async {
     checkTokenExpirationWrapper(() async {
       try {
         final result = await userDataSource.getUserDetails();
+
+        if (result == null) {
+          throw Exception('User details not found');
+        }
 
         final user = result['user'] as UserModel;
         final transformations =

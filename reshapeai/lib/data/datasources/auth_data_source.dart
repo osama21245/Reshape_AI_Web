@@ -220,25 +220,16 @@ class AuthDataSourceImpl implements AuthDataSource {
         return null;
       }
 
-      // Check if token needs refresh
-      final deviceId = await secureStorage.read(key: 'device_id');
-      if (deviceId != null) {
-        try {
-          // Try to refresh the token
-          await refreshToken(deviceId);
-        } catch (e) {
-          print('Token refresh failed, continuing with existing token: $e');
-        }
-      }
+      print('AuthDataSource: User ID: $userId');
+      print('AuthDataSource: Token: $token');
 
       // Get user data
-      final response = await dio.get(
+      final response = await dio.post(
         '/api/mobile/get-user-data',
-        queryParameters: {'userId': userId},
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        data: {'userId': userId, 'token': token},
       );
+
+      print('AuthDataSource: Response: ${response.data}');
 
       if (response.statusCode == 603) {
         throw TokenExpiredException();

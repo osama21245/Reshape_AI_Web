@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:reshapeai/presentation/cubits/auth/auth_cubit.dart';
-import 'package:reshapeai/presentation/cubits/auth/auth_state.dart';
-import 'package:reshapeai/presentation/screens/auth/qr_scan/qr_scan_screen.dart';
+
 import 'package:reshapeai/presentation/screens/auth/qr_scan/qr_scan_test_screen.dart';
-import 'package:reshapeai/presentation/screens/auth/qr_scan/test.dart';
 import 'package:reshapeai/presentation/screens/home/home_screen.dart';
+
+import '../../cubits/user/user_cubit.dart';
+import '../../cubits/user/user_state.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -40,8 +40,8 @@ class _SplashScreenState extends State<SplashScreen>
     // Check auth status after animation
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        final authCubit = BlocProvider.of<AuthCubit>(context, listen: false);
-        authCubit.checkAuthStatus();
+        final userCubit = BlocProvider.of<UserCubit>(context, listen: false);
+        userCubit.getUserDetails();
       }
     });
   }
@@ -56,13 +56,13 @@ class _SplashScreenState extends State<SplashScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black,
-      body: BlocListener<AuthCubit, AuthState>(
+      body: BlocListener<UserCubit, UserState>(
         listener: (context, state) {
-          if (state.status == AuthStatus.authenticated) {
+          if (state.status == UserStatus.loaded) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const HomeScreen()),
             );
-          } else if (state.status == AuthStatus.unauthenticated) {
+          } else if (state.status == UserStatus.error) {
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(builder: (_) => const QrScanTestScreen()),
             );

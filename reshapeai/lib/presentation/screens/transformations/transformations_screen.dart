@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reshapeai/domain/entities/transformation.dart';
-import 'package:reshapeai/presentation/cubits/transformation/transformation_cubit.dart';
-import 'package:reshapeai/presentation/cubits/transformation/transformation_state.dart';
+import 'package:reshapeai/presentation/cubits/user/user_cubit.dart';
+import 'package:reshapeai/presentation/cubits/user/user_state.dart';
 import 'package:reshapeai/presentation/widgets/gradient_button.dart';
 import 'package:reshapeai/presentation/screens/upload/upload_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -21,7 +21,12 @@ class _TransformationsScreenState extends State<TransformationsScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<TransformationCubit>().fetchTransformations();
+    // We don't need to fetch transformations here as they're already loaded with user data
+    // If user data isn't loaded yet, we can trigger it here
+    final userState = context.read<UserCubit>().state;
+    if (userState.status != UserStatus.loaded) {
+      context.read<UserCubit>().getUserDetails();
+    }
   }
 
   @override
@@ -40,20 +45,30 @@ class _TransformationsScreenState extends State<TransformationsScreen> {
         ),
         elevation: 0,
       ),
-      body: BlocBuilder<TransformationCubit, TransformationState>(
+      body: BlocBuilder<UserCubit, UserState>(
         builder: (context, state) {
-          if (state.status == TransformationStatus.loading) {
+          if (state.status == UserStatus.loading) {
             return _buildLoadingState();
-          } else if (state.status == TransformationStatus.success) {
+          } else if (state.status == UserStatus.loaded) {
             if (state.transformations.isEmpty) {
               return _buildEmptyState();
             }
             return _buildTransformationsList(state.transformations);
-          } else if (state.status == TransformationStatus.error) {
+          } else if (state.status == UserStatus.error) {
             return _buildErrorState(state.error);
           }
           return const SizedBox.shrink();
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const UploadScreen()),
+          );
+        },
+        backgroundColor: const Color(0xFF8B5CF6),
+        child: const Icon(Icons.add_photo_alternate_outlined),
       ),
     );
   }
@@ -108,6 +123,17 @@ class _TransformationsScreenState extends State<TransformationsScreen> {
               color: Colors.grey[400],
             ),
           ),
+          SizedBox(height: 24.h),
+          GradientButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UploadScreen()),
+              );
+            },
+            text: 'Upload Photo',
+            width: 200.w,
+          ),
         ],
       ),
     );
@@ -141,19 +167,34 @@ class _TransformationsScreenState extends State<TransformationsScreen> {
             ),
             textAlign: TextAlign.center,
           ),
+          SizedBox(height: 24.h),
+          GradientButton(
+            onPressed: () {
+              context.read<UserCubit>().getUserDetails();
+            },
+            text: 'Try Again',
+            width: 200.w,
+          ),
         ],
       ),
     );
   }
 
   Widget _buildTransformationsList(List<Transformation> transformations) {
-    return ListView.builder(
-      padding: EdgeInsets.all(16.w),
-      itemCount: transformations.length,
-      itemBuilder: (context, index) {
-        final transformation = transformations[index];
-        return _buildTransformationCard(transformation);
+    return RefreshIndicator(
+      onRefresh: () async {
+        await context.read<UserCubit>().getUserDetails();
       },
+      color: const Color(0xFF8B5CF6),
+      backgroundColor: Colors.grey[900],
+      child: ListView.builder(
+        padding: EdgeInsets.all(16.w),
+        itemCount: transformations.length,
+        itemBuilder: (context, index) {
+          final transformation = transformations[index];
+          return _buildTransformationCard(transformation);
+        },
+      ),
     );
   }
 

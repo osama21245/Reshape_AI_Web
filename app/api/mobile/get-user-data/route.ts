@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/config/db";
 import { AiGeneratedImages, User, AuthToken } from "@/config/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 
 // Endpoint for mobile app to get user data after QR authentication
 export async function GET(request: Request) {
@@ -83,7 +83,7 @@ export async function GET(request: Request) {
       .select()
       .from(AiGeneratedImages)
       .where(eq(AiGeneratedImages.userEmail, user[0].email))
-      .limit(10);
+      ;
 
     // Return user profile with recent transformations
     return NextResponse.json({
@@ -96,6 +96,7 @@ export async function GET(request: Request) {
       },
       transformations: transformations.map(t => ({
         id: t.id,
+        userId: user[0].id.toString(),
         originalImageUrl: t.originalImageUrl,
         transformedImageUrl: t.aiGeneratedImageUrl,
         style: t.style,
@@ -163,6 +164,14 @@ export async function POST(request: Request) {
     if (!user || user.length === 0) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    // Get user's recent transformations
+    const transformations = await db
+      .select()
+      .from(AiGeneratedImages)
+      .where(eq(AiGeneratedImages.userEmail, user[0].email))
+      .orderBy(desc(AiGeneratedImages.createdAt))
+      .limit(10);
 
     // Return user data
     return NextResponse.json({
