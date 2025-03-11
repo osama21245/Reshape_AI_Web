@@ -181,7 +181,15 @@ export async function POST(request: Request) {
         email: user[0].email,
         image: user[0].image,
         credits: user[0].credits,
-      }
+      },
+      transformations: transformations.map(t => ({
+        id: t.id,
+        userId: user[0].id.toString(),
+        originalImageUrl: t.originalImageUrl,
+        transformedImageUrl: t.aiGeneratedImageUrl,
+        style: t.style,
+        createdAt: t.createdAt
+      }))
     });
   } catch (error) {
     console.error("Error:", error);
