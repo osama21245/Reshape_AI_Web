@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reshapeai/presentation/cubits/auth/auth_cubit.dart';
 import 'package:reshapeai/presentation/cubits/auth/auth_state.dart';
 import 'package:reshapeai/presentation/screens/auth/qr_scan/qr_scan_screen.dart';
+import 'package:reshapeai/presentation/screens/auth/qr_scan/qr_scan_test_screen.dart';
 import 'package:reshapeai/presentation/screens/auth/qr_scan/test.dart';
 import 'package:reshapeai/presentation/screens/home/home_screen.dart';
 
@@ -63,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen>
             );
           } else if (state.status == AuthStatus.unauthenticated) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const QrScanScreen()),
+              MaterialPageRoute(builder: (_) => const QrScanTestScreen()),
             );
           }
         },

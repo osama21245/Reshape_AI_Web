@@ -30,14 +30,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Token has expired" }, { status:  603 });
     }
 
-    // Mark token as used if it's not already
-    if (!authToken[0].isUsed) {
-      await db
-        .update(AuthToken)
-        .set({ isUsed: true })
-        .where(eq(AuthToken.id, authToken[0].id));
-    }
-
     // Return the user ID and token
     return NextResponse.json({
       userId: authToken[0].userId,

@@ -28,6 +28,10 @@ class AuthCubit extends Cubit<AuthState> {
       final transformations =
           result['transformations'] as List<TransformationModel>;
 
+      print('AuthCubit: User: $user');
+      print('AuthCubit: Token: $token');
+      print('AuthCubit: Transformations: $transformations');
+
       // Update the state with the authenticated user
       emit(state.copyWith(
         status: AuthStatus.authenticated,

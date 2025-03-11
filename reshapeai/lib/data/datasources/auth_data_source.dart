@@ -48,19 +48,22 @@ class AuthDataSourceImpl implements AuthDataSource {
       if (authResponse.statusCode != 200) {
         throw Exception('Authentication failed: ${authResponse.statusCode}');
       }
-      //save the expiresAt
-      final expiresAt = authResponse.data['expiresAt'];
+
       await secureStorage.write(key: 'expires_at', value: expiresAt);
       // Save the token
       final token = authResponse.data['token'];
       await saveToken(token);
-
       // Get and save the user ID
       final userId = authResponse.data['userId'];
       await secureStorage.write(key: 'user_id', value: userId.toString());
 
+      print('AuthDataSource: Token: $token');
+      print('AuthDataSource: User ID: $userId');
+      print('AuthDataSource: Expires At: $expiresAt');
       // Step 2: Register the device
       final deviceResponse = await registerDevice(token);
+
+      print('AuthDataSource: Device Response: $deviceResponse');
 
       // Save the device ID for future token refreshes
       if (deviceResponse['deviceLogin'] != null &&
@@ -93,6 +96,9 @@ class AuthDataSourceImpl implements AuthDataSource {
           transformations.add(TransformationModel.fromJson(item));
         }
       }
+
+      print('AuthDataSource: Transformations: $transformations');
+      print('AuthDataSource: User Data: $userData');
 
       // Create user model
       final user = UserModel(
@@ -134,6 +140,9 @@ class AuthDataSourceImpl implements AuthDataSource {
           'deviceName': deviceName,
           'deviceLocation': deviceLocation
         },
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
       );
 
       if (response.statusCode == 603) {
