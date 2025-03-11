@@ -170,7 +170,8 @@ export async function POST(request: Request) {
         id: user[0].id,
         name: user[0].name,
         email: user[0].email,
-        image: user[0].image
+        image: user[0].image,
+        credits: user[0].credits,
       }
     });
   } catch (error) {
