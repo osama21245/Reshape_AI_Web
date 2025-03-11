@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/config/db";
 import { AuthToken, DeviceLogin } from "@/config/schema";
 import { eq, and } from "drizzle-orm";
-import { withApiAuth } from "../middleware";
 import crypto from "crypto";
 
 // Function to generate a secure random token
