@@ -7,6 +7,7 @@ abstract class UserDataSource {
   Future<Map<String, dynamic>> getUserDetails();
   Future<Map<String, dynamic>> updateUserProfile(
       {String? name, String? profileImage});
+  Future<Map<String, dynamic>> refreshToken();
 }
 
 class UserDataSourceImpl implements UserDataSource {
@@ -121,6 +122,32 @@ class UserDataSourceImpl implements UserDataSource {
       }
     } catch (e) {
       throw Exception('Error updating user profile: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> refreshToken() async {
+    try {
+      final deviceId = await secureStorage.read(key: 'device_id');
+      final userId = await secureStorage.read(key: 'user_id');
+      final response = await dio.post(
+        '/api/auth/refresh-token',
+        data: {'deviceId': deviceId, "userId": userId},
+      );
+
+      if (response.statusCode == 200) {
+        // Save the new token
+        final newToken = response.data['token'];
+        final expiresAt = response.data['expiresAt'];
+        await secureStorage.write(key: 'auth_token', value: newToken);
+        await secureStorage.write(key: 'expires_at', value: expiresAt);
+        return response.data;
+      } else {
+        throw Exception('Failed to refresh token: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error refreshing token: $e');
+      throw Exception('Token refresh failed: $e');
     }
   }
 }

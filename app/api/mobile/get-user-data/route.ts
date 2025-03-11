@@ -91,7 +91,8 @@ export async function GET(request: Request) {
         id: user[0].id,
         name: user[0].name,
         email: user[0].email,
-        image: user[0].image
+        image: user[0].image,
+        credits: user[0].credits
       },
       transformations: transformations.map(t => ({
         id: t.id,
@@ -148,7 +149,7 @@ export async function POST(request: Request) {
     if (new Date(authToken[0].expiresAt) < new Date()) {
       return NextResponse.json(
         { error: "Token has expired" },
-        { status: 401 }
+        { status: 603 }
       );
     }
 

@@ -4,8 +4,11 @@ import 'package:device_info_plus/device_info_plus.dart';
 import 'package:reshapeai/data/models/transformation_model.dart';
 import 'package:reshapeai/data/models/user_model.dart';
 
+import '../../core/erorr/custom_errors/token_expired_exception.dart';
+
 abstract class AuthDataSource {
-  Future<Map<String, dynamic>> loginWithQrCode(String qrToken);
+  Future<Map<String, dynamic>> loginWithQrCode(
+      String qrToken, String expiresAt);
   Future<void> logout();
   Future<Map<String, dynamic>?> getCurrentUser();
   Future<String?> getToken();
@@ -26,7 +29,8 @@ class AuthDataSourceImpl implements AuthDataSource {
   });
 
   @override
-  Future<Map<String, dynamic>> loginWithQrCode(String qrToken) async {
+  Future<Map<String, dynamic>> loginWithQrCode(
+      String qrToken, String expiresAt) async {
     try {
       print(
           'AuthDataSource: Attempting to authenticate with QR token: $qrToken');
@@ -37,10 +41,16 @@ class AuthDataSourceImpl implements AuthDataSource {
         data: {'token': qrToken},
       );
 
+      if (authResponse.statusCode == 603) {
+        throw TokenExpiredException();
+      }
+
       if (authResponse.statusCode != 200) {
         throw Exception('Authentication failed: ${authResponse.statusCode}');
       }
-
+      //save the expiresAt
+      final expiresAt = authResponse.data['expiresAt'];
+      await secureStorage.write(key: 'expires_at', value: expiresAt);
       // Save the token
       final token = authResponse.data['token'];
       await saveToken(token);
@@ -65,6 +75,10 @@ class AuthDataSourceImpl implements AuthDataSource {
         '/api/mobile/get-user-data',
         data: {'userId': userId, 'token': token},
       );
+
+      if (userResponse.statusCode == 603) {
+        throw TokenExpiredException();
+      }
 
       if (userResponse.statusCode != 200) {
         throw Exception('Failed to get user data: ${userResponse.statusCode}');
@@ -121,6 +135,10 @@ class AuthDataSourceImpl implements AuthDataSource {
           'deviceLocation': deviceLocation
         },
       );
+
+      if (response.statusCode == 603) {
+        throw TokenExpiredException();
+      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         print('Device registered successfully: ${response.data}');
@@ -212,6 +230,10 @@ class AuthDataSourceImpl implements AuthDataSource {
           headers: {'Authorization': 'Bearer $token'},
         ),
       );
+
+      if (response.statusCode == 603) {
+        throw TokenExpiredException();
+      }
 
       if (response.statusCode == 200) {
         final userData = response.data['user'];

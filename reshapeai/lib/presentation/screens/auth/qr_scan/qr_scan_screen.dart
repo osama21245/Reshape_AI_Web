@@ -24,7 +24,6 @@ class _QrScanScreenState extends State<QrScanScreen> {
   String? scannedCode;
   bool isProcessing = false;
   bool hasPermission = false;
-  bool cameraInitialized = false;
   String errorMessage = '';
 
   @override
@@ -43,7 +42,6 @@ class _QrScanScreenState extends State<QrScanScreen> {
     });
   }
 
-  // To ensure hot reload works with the QR scanner
   @override
   void reassemble() {
     super.reassemble();
@@ -135,9 +133,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                     : isScanning
                         ? GradientButton(
                             onPressed: () {
-                              if (controller != null) {
-                                controller!.toggleFlash();
-                              }
+                              controller?.toggleFlash();
                             },
                             text: 'Toggle Flash',
                             width: 200.w,
@@ -152,6 +148,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                                   setState(() {
                                     isScanning = true;
                                     scannedCode = null;
+                                    errorMessage = '';
                                   });
                                   controller?.resumeCamera();
                                 },
@@ -203,13 +200,11 @@ class _QrScanScreenState extends State<QrScanScreen> {
   }
 
   Widget _buildQrView(BuildContext context) {
-    // For this example we check how width or tall the device is and change the scanArea and overlay accordingly.
     var scanArea = (MediaQuery.of(context).size.width < 400 ||
             MediaQuery.of(context).size.height < 400)
         ? 200.0
         : 300.0;
 
-    // Handle camera initialization errors
     return Stack(
       children: [
         QRView(
@@ -224,20 +219,9 @@ class _QrScanScreenState extends State<QrScanScreen> {
           ),
           onPermissionSet: (ctrl, p) => _onPermissionSet(context, ctrl, p),
         ),
-        if (!cameraInitialized)
-          Container(
-            color: Colors.black,
-            child: const Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(
-                  Color(0xFF8B5CF6),
-                ),
-              ),
-            ),
-          ),
         if (errorMessage.isNotEmpty)
           Container(
-            color: Colors.black,
+            color: Colors.black.withOpacity(0.7),
             child: Center(
               child: Padding(
                 padding: EdgeInsets.all(20.w),
@@ -246,25 +230,16 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   children: [
                     Icon(
                       Icons.error_outline,
-                      size: 80.sp,
+                      size: 60.sp,
                       color: Colors.red,
                     ),
                     SizedBox(height: 20.h),
-                    Text(
-                      'Camera Error',
-                      style: TextStyle(
-                        fontSize: 20.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 10.h),
                     Text(
                       errorMessage,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16.sp,
-                        color: Colors.grey[400],
+                        color: Colors.white,
                       ),
                     ),
                     SizedBox(height: 20.h),
@@ -272,9 +247,8 @@ class _QrScanScreenState extends State<QrScanScreen> {
                       onPressed: () {
                         setState(() {
                           errorMessage = '';
-                          isScanning = true;
                         });
-                        _initializeCamera();
+                        controller?.resumeCamera();
                       },
                       text: 'Try Again',
                       width: 200.w,
@@ -286,18 +260,6 @@ class _QrScanScreenState extends State<QrScanScreen> {
           ),
       ],
     );
-  }
-
-  void _initializeCamera() {
-    try {
-      if (controller != null) {
-        controller!.resumeCamera();
-      }
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Failed to initialize camera: $e';
-      });
-    }
   }
 
   Widget _buildScannedResult(BuildContext context) {
@@ -336,7 +298,7 @@ class _QrScanScreenState extends State<QrScanScreen> {
                   setState(() {
                     isProcessing = true;
                   });
-                  context.read<AuthCubit>().scanQrCode(scannedCode!);
+                  _processScannedCode(scannedCode!);
                 }
               },
               text: 'Authenticate',
@@ -348,67 +310,61 @@ class _QrScanScreenState extends State<QrScanScreen> {
   }
 
   void _onQRViewCreated(QRViewController controller) {
-    setState(() {
-      this.controller = controller;
-      cameraInitialized = true;
+    this.controller = controller;
+
+    controller.scannedDataStream.listen((scanData) {
+      if (isScanning && scanData.code != null && !isProcessing) {
+        setState(() {
+          isScanning = false;
+          scannedCode = scanData.code;
+        });
+        controller.pauseCamera();
+        _processScannedCode(scanData.code!);
+      }
     });
+  }
 
+  void _processScannedCode(String code) {
     try {
-      controller.scannedDataStream.listen((scanData) {
-        print('scanData: ${scanData.code}');
-        if (isScanning && scanData.code != null) {
-          setState(() {
-            isScanning = false;
-            scannedCode = scanData.code;
-          });
-          controller.pauseCamera();
-
-          try {
-            // Parse the JSON data from the QR code
-            final jsonData = jsonDecode(scanData.code!);
-
-            // Extract the token from the parsed JSON
-            final token = jsonData['token'];
-
-            if (token != null) {
-              // Auto authenticate with the token
-              setState(() {
-                isProcessing = true;
-              });
-
-              print('Using token: $token');
-              context.read<AuthCubit>().scanQrCode(token);
-            } else {
-              setState(() {
-                errorMessage = 'Invalid QR code: token not found';
-                isScanning = true;
-              });
-              controller.resumeCamera();
-            }
-          } catch (e) {
-            print('Error parsing QR code: $e');
-            setState(() {
-              errorMessage = 'Invalid QR code format';
-              isScanning = true;
-            });
-            controller.resumeCamera();
-          }
-        }
-      });
-    } catch (e) {
       setState(() {
-        errorMessage = 'Error scanning QR code: $e';
+        isProcessing = true;
       });
+
+      // Parse the JSON data from the QR code
+      final jsonData = jsonDecode(code);
+
+      // Extract the token from the parsed JSON
+      final token = jsonData['token'];
+      final expiresAt = jsonData['expiresAt'];
+
+      if (token != null && expiresAt != null) {
+        context.read<AuthCubit>().scanQrCode(token, expiresAt);
+      } else {
+        _handleScanError('Invalid QR code: missing token or expiration');
+      }
+    } catch (e) {
+      _handleScanError('Invalid QR code format');
     }
   }
 
-  void _onPermissionSet(BuildContext context, QRViewController ctrl, bool p) {
+  void _handleScanError(String message) {
     setState(() {
-      hasPermission = p;
-      if (!p) {
-        errorMessage = 'Camera permission not granted';
-      }
+      errorMessage = message;
+      isProcessing = false;
+      isScanning = true;
     });
+    controller?.resumeCamera();
+  }
+
+  void _onPermissionSet(BuildContext context, QRViewController ctrl, bool p) {
+    if (mounted) {
+      setState(() {
+        hasPermission = p;
+        if (!p) {
+          errorMessage = 'Camera permission not granted';
+        }
+      });
+    }
 
     if (!p) {
       ScaffoldMessenger.of(context).showSnackBar(

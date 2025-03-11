@@ -4,6 +4,8 @@ import 'package:reshapeai/data/models/transformation_model.dart';
 import 'package:reshapeai/data/models/user_model.dart';
 import 'package:reshapeai/presentation/cubits/auth/auth_state.dart';
 
+import '../../../core/erorr/custom_errors/token_expired_exception.dart';
+
 class AuthCubit extends Cubit<AuthState> {
   final AuthDataSource authDataSource;
 
@@ -11,14 +13,14 @@ class AuthCubit extends Cubit<AuthState> {
     required this.authDataSource,
   }) : super(const AuthState());
 
-  Future<void> scanQrCode(String qrToken) async {
+  Future<void> scanQrCode(String qrToken, String expiresAt) async {
     emit(state.copyWith(status: AuthStatus.loading));
 
     try {
       print('AuthCubit: Scanning QR code with token: $qrToken');
 
       // Use the data source to authenticate with QR code
-      final result = await authDataSource.loginWithQrCode(qrToken);
+      final result = await authDataSource.loginWithQrCode(qrToken, expiresAt);
 
       // Extract user and transformations from the result
       final user = result['user'] as UserModel;
@@ -113,6 +115,7 @@ class AuthCubit extends Cubit<AuthState> {
         emit(const AuthState(status: AuthStatus.unauthenticated));
       }
     } catch (e) {
+      if (e is TokenExpiredException) {}
       emit(state.copyWith(
         status: AuthStatus.error,
         errorMessage: e.toString(),

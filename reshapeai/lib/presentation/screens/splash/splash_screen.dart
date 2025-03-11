@@ -63,7 +63,7 @@ class _SplashScreenState extends State<SplashScreen>
             );
           } else if (state.status == AuthStatus.unauthenticated) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const Test()),
+              MaterialPageRoute(builder: (_) => const QrScanScreen()),
             );
           }
         },

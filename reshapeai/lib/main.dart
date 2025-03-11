@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthCubit>(
-            create: (_) => sl<AuthCubit>()..checkAuthStatus()),
+            create: (_) => sl<AuthCubit>()),
         BlocProvider<UserCubit>(create: (_) => sl<UserCubit>()..getUserDetails()),
         BlocProvider<TransformationCubit>(
             create: (_) => sl<TransformationCubit>()),

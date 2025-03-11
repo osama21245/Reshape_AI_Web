@@ -121,6 +121,13 @@ export async function withApiAuth(
       );
     }
 
+    if (new Date(authToken[0].expiresAt) < new Date()) {
+      return NextResponse.json(
+        { error: "Token has expired" },
+        { status: 603 }
+      );
+    }
+
     // Call the handler with the user ID
     return await handler(authToken[0].userId, request);
   } catch (error) {

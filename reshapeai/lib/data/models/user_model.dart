@@ -7,12 +7,14 @@ class UserModel extends User {
     required String email,
     String? profileImage,
     required DateTime createdAt,
+    required int credits,
   }) : super(
           id: id,
           name: name,
           email: email,
           profileImage: profileImage,
           createdAt: createdAt,
+          credits: credits,
         );
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -25,6 +27,7 @@ class UserModel extends User {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'])
           : DateTime.now(),
+      credits: json['credits'] ?? 0,
     );
   }
 
@@ -35,6 +38,7 @@ class UserModel extends User {
       'email': email,
       'profileImage': profileImage,
       'createdAt': createdAt.toIso8601String(),
+      'credits': credits,
     };
   }
 }

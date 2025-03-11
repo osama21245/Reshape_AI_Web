@@ -11,10 +11,10 @@ function generateSecureToken(length = 32) {
 }
 
 export async function POST(request: Request) {
-  return withApiAuth(request, async (userId, req) => {
     try {
       // Get the device ID from the request
-      const { deviceId } = await req.json();
+      const { deviceId, userId } = await request.json();
+
       
       if (!deviceId) {
         return NextResponse.json(
@@ -81,6 +81,6 @@ export async function POST(request: Request) {
         { error: "Failed to refresh token" },
         { status: 500 }
       );
-    }
-  });
+    
+  };
 } 
