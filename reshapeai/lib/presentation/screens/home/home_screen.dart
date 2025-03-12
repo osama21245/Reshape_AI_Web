@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:reshapeai/core/theme/app_theme.dart';
 import 'package:reshapeai/domain/entities/transformation.dart';
 import 'package:reshapeai/presentation/cubits/transformation/transformation_cubit.dart';
 import 'package:reshapeai/presentation/cubits/transformation/transformation_state.dart';
@@ -9,29 +10,18 @@ import 'package:reshapeai/presentation/cubits/user/user_state.dart';
 import 'package:reshapeai/presentation/screens/upload/upload_screen.dart';
 import 'package:reshapeai/presentation/screens/transformations/transformations_screen.dart';
 import 'package:reshapeai/presentation/screens/settings/settings_screen.dart';
+import 'package:reshapeai/presentation/screens/billing/billing_screen.dart';
 import 'package:reshapeai/presentation/widgets/gradient_button.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
-
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<UserCubit>().getUserDetails();
-    context.read<TransformationCubit>().fetchTransformations();
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.darkBackground,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -42,18 +32,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 SizedBox(height: 20.h),
                 _buildHeader(context),
                 SizedBox(height: 30.h),
-                _buildWelcomeSection(),
+                _buildWelcomeSection(context),
                 SizedBox(height: 30.h),
                 _buildActionButtons(context),
                 SizedBox(height: 30.h),
-                _buildRecentTransformations(),
+                _buildRecentTransformations(context),
                 SizedBox(height: 20.h),
               ],
             ),
           ),
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
+      bottomNavigationBar: _buildBottomNavigationBar(context),
     );
   }
 
@@ -62,8 +52,8 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, state) {
         if (state.status == UserStatus.loading) {
           return Shimmer.fromColors(
-            baseColor: Colors.grey[800]!,
-            highlightColor: Colors.grey[700]!,
+            baseColor: AppTheme.cardBackground,
+            highlightColor: AppTheme.borderColor,
             child: Container(
               height: 60.h,
               decoration: BoxDecoration(
@@ -75,67 +65,112 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         if (state.user != null) {
-          return Row(
-            children: [
-              CircleAvatar(
-                radius: 20.r,
-                backgroundColor: Colors.grey[800],
-                backgroundImage: state.user!.profileImage != null
-                    ? CachedNetworkImageProvider(state.user!.profileImage!)
-                    : null,
-                child: state.user!.profileImage == null
-                    ? Icon(
-                        Icons.person,
-                        size: 20.sp,
-                        color: Colors.grey[600],
-                      )
-                    : null,
-              ),
-              SizedBox(width: 12.w),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome back,',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                  Text(
-                    state.user!.name,
-                    style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const SettingsScreen(),
-                    ),
-                  );
-                },
-                child: Container(
-                  padding: EdgeInsets.all(8.w),
+          return Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            decoration: AppTheme.cardDecoration,
+            child: Row(
+              children: [
+                Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[900],
-                    borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: Colors.grey[800]!),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryPurple.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
-                  child: Icon(
-                    Icons.settings_outlined,
-                    color: Colors.grey[400],
-                    size: 24.sp,
+                  child: CircleAvatar(
+                    radius: 24.r,
+                    backgroundColor: AppTheme.cardBackground,
+                    backgroundImage: state.user!.profileImage != null
+                        ? CachedNetworkImageProvider(state.user!.profileImage!)
+                        : null,
+                    child: state.user!.profileImage == null
+                        ? Icon(
+                            Icons.person,
+                            size: 24.sp,
+                            color: AppTheme.textSecondary,
+                          )
+                        : null,
                   ),
                 ),
-              ),
-            ],
+                SizedBox(width: 16.w),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Welcome back,',
+                      style: AppTheme.bodyMedium(context),
+                    ),
+                    Text(
+                      state.user!.name,
+                      style: AppTheme.headingSmall(context),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                Container(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.primaryGradient,
+                    borderRadius: BorderRadius.circular(20.r),
+                  ),
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const BillingScreen(),
+                        ),
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.bolt,
+                          color: Colors.white,
+                          size: 16.sp,
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          '${state.user!.credits}',
+                          style: TextStyle(
+                            fontSize: 14.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const SettingsScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(10.w),
+                    decoration: BoxDecoration(
+                      color: AppTheme.cardBackground,
+                      borderRadius: BorderRadius.circular(12.r),
+                      border: Border.all(color: AppTheme.borderColor),
+                    ),
+                    child: Icon(
+                      Icons.settings_outlined,
+                      color: AppTheme.textSecondary,
+                      size: 20.sp,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           );
         }
 
@@ -144,45 +179,57 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildWelcomeSection() {
+  Widget _buildWelcomeSection(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20.w),
+      padding: EdgeInsets.all(24.w),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: Colors.grey[800]!),
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.primaryPurple.withOpacity(0.2),
+            AppTheme.primaryBlue.withOpacity(0.2),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: AppTheme.primaryPurple.withOpacity(0.3),
+          width: 1.5,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                Icons.lightbulb_outline,
-                color: const Color(0xFFFFC107),
-                size: 24.sp,
+              Container(
+                padding: EdgeInsets.all(10.w),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentYellow.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+                child: Icon(
+                  Icons.lightbulb_outline,
+                  color: AppTheme.accentYellow,
+                  size: 24.sp,
+                ),
               ),
-              SizedBox(width: 12.w),
+              SizedBox(width: 16.w),
               Text(
                 'Welcome to Reshape AI',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                style: AppTheme.headingMedium(context),
               ),
             ],
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 20.h),
           Text(
             'Transform your living spaces with AI-powered interior design. Upload a photo of your room and see it reimagined in different styles.',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: Colors.grey[400],
-              height: 1.5,
+            style: AppTheme.bodyMedium(context).copyWith(
+              height: 1.6,
+              fontSize: 15.sp,
             ),
           ),
-          SizedBox(height: 16.h),
+          SizedBox(height: 24.h),
           GradientButton(
             onPressed: () {
               Navigator.of(context).push(
@@ -190,7 +237,7 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             text: 'Start Transforming',
-            height: 48.h,
+            height: 50.h,
           ),
         ],
       ),
@@ -208,23 +255,26 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             child: Container(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16.r),
+                gradient: AppTheme.primaryGradient,
+                borderRadius: BorderRadius.circular(20.r),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryPurple.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(8.w),
+                    padding: EdgeInsets.all(10.w),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8.r),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Icon(
                       Icons.add_photo_alternate_outlined,
@@ -232,20 +282,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       size: 24.sp,
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 20.h),
                   Text(
                     'New Transformation',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    style: AppTheme.headingSmall(context),
                   ),
-                  SizedBox(height: 4.h),
+                  SizedBox(height: 6.h),
                   Text(
                     'Transform your space',
                     style: TextStyle(
-                      fontSize: 12.sp,
+                      fontSize: 13.sp,
                       color: Colors.white.withOpacity(0.8),
                     ),
                   ),
@@ -265,43 +311,36 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             child: Container(
-              padding: EdgeInsets.all(16.w),
+              padding: EdgeInsets.all(20.w),
               decoration: BoxDecoration(
-                color: Colors.grey[900],
-                borderRadius: BorderRadius.circular(16.r),
-                border: Border.all(color: Colors.grey[800]!),
+                color: AppTheme.cardBackground,
+                borderRadius: BorderRadius.circular(20.r),
+                border: Border.all(color: AppTheme.borderColor),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    padding: EdgeInsets.all(8.w),
+                    padding: EdgeInsets.all(10.w),
                     decoration: BoxDecoration(
-                      color: Colors.grey[800],
-                      borderRadius: BorderRadius.circular(8.r),
+                      color: AppTheme.primaryBlue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12.r),
                     ),
                     child: Icon(
-                      Icons.history_outlined,
-                      color: Colors.grey[400],
+                      Icons.grid_view_rounded,
+                      color: AppTheme.primaryBlue,
                       size: 24.sp,
                     ),
                   ),
-                  SizedBox(height: 16.h),
+                  SizedBox(height: 20.h),
                   Text(
                     'My Transformations',
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    style: AppTheme.headingSmall(context),
                   ),
-                  SizedBox(height: 4.h),
+                  SizedBox(height: 6.h),
                   Text(
-                    'View your history',
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey[400],
-                    ),
+                    'View your gallery',
+                    style: AppTheme.bodySmall(context),
                   ),
                 ],
               ),
@@ -312,7 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRecentTransformations() {
+  Widget _buildRecentTransformations(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -321,24 +360,22 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Text(
               'Recent Transformations',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+              style: AppTheme.headingMedium(context),
             ),
-            TextButton(
-              onPressed: () {
+            GestureDetector(
+              onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                      builder: (_) => const TransformationsScreen()),
+                    builder: (_) => const TransformationsScreen(),
+                  ),
                 );
               },
               child: Text(
-                'See All',
+                'View All',
                 style: TextStyle(
-                  color: const Color(0xFF8B5CF6),
                   fontSize: 14.sp,
+                  color: AppTheme.primaryPurple,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -348,253 +385,302 @@ class _HomeScreenState extends State<HomeScreen> {
         BlocBuilder<TransformationCubit, TransformationState>(
           builder: (context, state) {
             if (state.status == TransformationStatus.loading) {
-              return _buildTransformationShimmer();
+              return _buildLoadingTransformations();
             }
 
-            if (state.status == TransformationStatus.success) {
-              if (state.transformations.isEmpty) {
-                return _buildEmptyTransformations();
-              }
-              return _buildTransformationsList(state.transformations);
+            if (state.transformations.isEmpty) {
+              return _buildEmptyTransformations(context);
             }
 
-            return const SizedBox.shrink();
+            final recentTransformations = state.transformations.length > 3
+                ? state.transformations.sublist(0, 3)
+                : state.transformations;
+
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: recentTransformations.length,
+              itemBuilder: (context, index) {
+                final transformation = recentTransformations[index];
+                return _buildTransformationItem(context, transformation);
+              },
+            );
           },
         ),
       ],
     );
   }
 
-  Widget _buildTransformationShimmer() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[700]!,
-      child: ListView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: 2,
-        itemBuilder: (context, index) {
-          return Container(
-            margin: EdgeInsets.only(bottom: 16.h),
-            height: 200.h,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16.r),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildEmptyTransformations() {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 40.h),
-      alignment: Alignment.center,
-      child: Column(
-        children: [
-          Icon(
-            Icons.image_not_supported_outlined,
-            size: 60.sp,
-            color: Colors.grey[600],
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            'No transformations yet',
-            style: TextStyle(
-              fontSize: 16.sp,
-              color: Colors.grey[400],
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            'Upload an image to get started',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: Colors.grey[600],
-            ),
-          ),
-          SizedBox(height: 24.h),
-          GradientButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const UploadScreen()),
-              );
-            },
-            text: 'Upload Image',
-            width: 200.w,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTransformationsList(List<Transformation> transformations) {
-    // Show only the most recent 3 transformations
-    final recentTransformations = transformations.length > 3
-        ? transformations.sublist(0, 3)
-        : transformations;
-
+  Widget _buildLoadingTransformations() {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: recentTransformations.length,
+      itemCount: 3,
       itemBuilder: (context, index) {
-        final transformation = recentTransformations[index];
-        return Container(
-          margin: EdgeInsets.only(bottom: 16.h),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(color: Colors.grey[800]!),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(16.r),
-                  topRight: Radius.circular(16.r),
-                ),
-                child: CachedNetworkImage(
-                  imageUrl: transformation.transformedImageUrl,
-                  height: 200.h,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Shimmer.fromColors(
-                    baseColor: Colors.grey[800]!,
-                    highlightColor: Colors.grey[700]!,
-                    child: Container(
-                      height: 200.h,
-                      color: Colors.white,
-                    ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    height: 200.h,
-                    color: Colors.grey[900],
-                    child: Center(
-                      child: Icon(
-                        Icons.error_outline,
-                        color: Colors.grey[600],
-                        size: 40.sp,
-                      ),
-                    ),
-                  ),
-                ),
+        return Padding(
+          padding: EdgeInsets.only(bottom: 16.h),
+          child: Shimmer.fromColors(
+            baseColor: AppTheme.cardBackground,
+            highlightColor: AppTheme.borderColor,
+            child: Container(
+              height: 100.h,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16.r),
               ),
-              Padding(
-                padding: EdgeInsets.all(16.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 12.w,
-                        vertical: 6.h,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[800],
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Text(
-                        transformation.style,
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _buildBottomNavigationBar() {
+  Widget _buildEmptyTransformations(BuildContext context) {
     return Container(
-      height: 80.h,
+      padding: EdgeInsets.symmetric(vertical: 30.h),
       decoration: BoxDecoration(
-        color: Colors.grey[900],
-        border: Border(
-          top: BorderSide(
-            color: Colors.grey[800]!,
-            width: 1,
-          ),
-        ),
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppTheme.borderColor),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(
-            icon: Icons.home,
-            label: 'Home',
-            isSelected: true,
-            onTap: () {},
-          ),
-          _buildNavItem(
-            icon: Icons.add_photo_alternate_outlined,
-            label: 'Upload',
-            isSelected: false,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const UploadScreen()),
-              );
-            },
-          ),
-          _buildNavItem(
-            icon: Icons.history,
-            label: 'History',
-            isSelected: false,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                    builder: (_) => const TransformationsScreen()),
-              );
-            },
-          ),
-          _buildNavItem(
-            icon: Icons.settings,
-            label: 'Settings',
-            isSelected: false,
-            onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsScreen()),
-              );
-            },
-          ),
-        ],
+      child: Center(
+        child: Column(
+          children: [
+            Icon(
+              Icons.image_outlined,
+              size: 48.sp,
+              color: AppTheme.textSecondary,
+            ),
+            SizedBox(height: 16.h),
+            Text(
+              'No transformations yet',
+              style: AppTheme.headingSmall(context),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Start by uploading a photo',
+              style: AppTheme.bodyMedium(context),
+            ),
+            SizedBox(height: 20.h),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const UploadScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryPurple,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+              child: Text(
+                'Upload Photo',
+                style: TextStyle(
+                  fontSize: 14.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildNavItem({
-    required IconData icon,
-    required String label,
-    required bool isSelected,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildTransformationItem(
+      BuildContext context, Transformation transformation) {
     return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: isSelected ? const Color(0xFF8B5CF6) : Colors.grey[400],
-            size: 24.sp,
+      onTap: () {
+        // Navigate to transformation details
+      },
+      child: Container(
+        margin: EdgeInsets.only(bottom: 16.h),
+        decoration: BoxDecoration(
+          color: AppTheme.cardBackground,
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: AppTheme.borderColor),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16.r),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 100.w,
+                height: 100.h,
+                child: CachedNetworkImage(
+                  imageUrl: transformation.transformedImageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Shimmer.fromColors(
+                    baseColor: AppTheme.cardBackground,
+                    highlightColor: AppTheme.borderColor,
+                    child: Container(
+                      color: Colors.white,
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: AppTheme.cardBackground,
+                    child: Icon(
+                      Icons.error_outline,
+                      color: AppTheme.textSecondary,
+                      size: 24.sp,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 8.w,
+                          vertical: 4.h,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryPurple.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8.r),
+                        ),
+                        child: Text(
+                          transformation.style,
+                          style: TextStyle(
+                            fontSize: 12.sp,
+                            color: AppTheme.primaryPurple,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        'Room Transformation',
+                        style: AppTheme.headingSmall(context),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        'Created ${_formatDate(transformation.createdAt)}',
+                        style: AppTheme.bodySmall(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.only(right: 16.w),
+                child: Icon(
+                  Icons.arrow_forward_ios,
+                  color: AppTheme.textSecondary,
+                  size: 16.sp,
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 4.h),
-          Text(
-            label,
-            style: TextStyle(
-              color: isSelected ? const Color(0xFF8B5CF6) : Colors.grey[400],
-              fontSize: 12.sp,
-            ),
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+
+    if (difference.inDays == 0) {
+      return 'Today';
+    } else if (difference.inDays == 1) {
+      return 'Yesterday';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays} days ago';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.cardBackground,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20.r),
+          topRight: Radius.circular(20.r),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
           ),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20.r),
+          topRight: Radius.circular(20.r),
+        ),
+        child: BottomNavigationBar(
+          currentIndex: 0,
+          backgroundColor: AppTheme.cardBackground,
+          selectedItemColor: AppTheme.primaryPurple,
+          unselectedItemColor: AppTheme.textSecondary,
+          type: BottomNavigationBarType.fixed,
+          showSelectedLabels: true,
+          showUnselectedLabels: true,
+          selectedLabelStyle: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: TextStyle(
+            fontSize: 12.sp,
+          ),
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined, size: 24.sp),
+              activeIcon: Icon(Icons.home, size: 24.sp),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.add_photo_alternate_outlined, size: 24.sp),
+              activeIcon: Icon(Icons.add_photo_alternate, size: 24.sp),
+              label: 'Create',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.grid_view_outlined, size: 24.sp),
+              activeIcon: Icon(Icons.grid_view, size: 24.sp),
+              label: 'Gallery',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings_outlined, size: 24.sp),
+              activeIcon: Icon(Icons.settings, size: 24.sp),
+              label: 'Settings',
+            ),
+          ],
+          onTap: (index) {
+            switch (index) {
+              case 0:
+                // Already on home
+                break;
+              case 1:
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const UploadScreen()),
+                );
+                break;
+              case 2:
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const TransformationsScreen(),
+                  ),
+                );
+                break;
+              case 3:
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                );
+                break;
+            }
+          },
+        ),
       ),
     );
   }

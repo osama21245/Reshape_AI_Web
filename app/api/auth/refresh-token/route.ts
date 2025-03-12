@@ -47,7 +47,7 @@ export async function POST(request: Request) {
       
       // Set expiration time (30 days from now for long-term access)
       const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + 30);
+      expiresAt.setDate(expiresAt.getDate() + 2);
       
       // Store the new token
       const [authToken] = await db

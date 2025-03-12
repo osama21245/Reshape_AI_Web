@@ -41,4 +41,22 @@ class UserModel extends User {
       'credits': credits,
     };
   }
+
+  UserModel copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? profileImage,
+    DateTime? createdAt,
+    int? credits,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      profileImage: profileImage ?? this.profileImage,
+      createdAt: createdAt ?? this.createdAt,
+      credits: credits ?? this.credits,
+    );
+  }
 }

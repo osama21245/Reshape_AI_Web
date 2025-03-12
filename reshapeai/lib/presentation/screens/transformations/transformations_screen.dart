@@ -6,6 +6,8 @@ import 'package:reshapeai/presentation/cubits/user/user_cubit.dart';
 import 'package:reshapeai/presentation/cubits/user/user_state.dart';
 import 'package:reshapeai/presentation/widgets/gradient_button.dart';
 import 'package:reshapeai/presentation/screens/upload/upload_screen.dart';
+import 'package:reshapeai/presentation/widgets/image_comparison_slider.dart';
+import 'package:reshapeai/presentation/screens/transformations/transformation_details_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
@@ -199,114 +201,70 @@ class _TransformationsScreenState extends State<TransformationsScreen> {
   }
 
   Widget _buildTransformationCard(Transformation transformation) {
-    return Card(
-      margin: EdgeInsets.only(bottom: 16.h),
-      color: Colors.grey[900],
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
-        side: BorderSide(color: Colors.grey[800]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(12.r),
-              topRight: Radius.circular(12.r),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildTransformationImage(
-                    transformation.originalImageUrl,
-                    'Original',
-                  ),
-                ),
-                Expanded(
-                  child: _buildTransformationImage(
-                    transformation.transformedImageUrl,
-                    'Transformed',
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TransformationDetailsScreen(
+              transformation: transformation,
             ),
           ),
-          Padding(
-            padding: EdgeInsets.all(16.w),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  transformation.style,
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+        );
+      },
+      child: Card(
+        margin: EdgeInsets.only(bottom: 16.h),
+        color: Colors.grey[900],
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
+          side: BorderSide(color: Colors.grey[800]!),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12.r),
+                topRight: Radius.circular(12.r),
+              ),
+              child: ImageComparisonSlider(
+                beforeImageUrl: transformation.originalImageUrl,
+                afterImageUrl: transformation.transformedImageUrl,
+                height: 250.h,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12.r),
+                  topRight: Radius.circular(12.r),
                 ),
-                SizedBox(height: 8.h),
-                Text(
-                  DateFormat('MMM d, yyyy • h:mm a')
-                      .format(transformation.createdAt),
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    color: Colors.grey[400],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTransformationImage(String imageUrl, String label) {
-    return Stack(
-      children: [
-        AspectRatio(
-          aspectRatio: 1,
-          child: CachedNetworkImage(
-            imageUrl: imageUrl,
-            fit: BoxFit.cover,
-            placeholder: (context, url) => Shimmer.fromColors(
-              baseColor: Colors.grey[800]!,
-              highlightColor: Colors.grey[700]!,
-              child: Container(color: Colors.white),
-            ),
-            errorWidget: (context, url, error) => Container(
-              color: Colors.grey[800],
-              child: Icon(
-                Icons.broken_image,
-                color: Colors.grey[600],
-                size: 40.sp,
               ),
             ),
-          ),
-        ),
-        Positioned(
-          top: 8.h,
-          left: 8.w,
-          child: Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: 8.w,
-              vertical: 4.h,
-            ),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.7),
-              borderRadius: BorderRadius.circular(4.r),
-            ),
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 12.sp,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
+            Padding(
+              padding: EdgeInsets.all(16.w),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    transformation.style,
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(height: 8.h),
+                  Text(
+                    DateFormat('MMM d, yyyy • h:mm a')
+                        .format(transformation.createdAt),
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

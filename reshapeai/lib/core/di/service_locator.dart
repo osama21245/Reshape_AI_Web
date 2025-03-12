@@ -48,9 +48,11 @@ Future<void> setupServiceLocator() async {
     ),
   );
 
+  // Register TransformationCubit after UserCubit to avoid circular dependency
   sl.registerFactory(
     () => TransformationCubit(
       transformationDataSource: sl(),
+      userCubit: sl<UserCubit>(),
     ),
   );
 }

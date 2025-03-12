@@ -68,6 +68,27 @@ class UserCubit extends Cubit<UserState> {
     });
   }
 
+  Future<void> updateCreditsAfterTransformation() async {
+    if (state.user == null) return;
+
+    try {
+      // Optimistically update the credits locally first
+      final updatedUser = state.user!.copyWith(
+        credits: state.user!.credits - 1,
+      );
+
+      emit(state.copyWith(
+        user: updatedUser,
+      ));
+
+      // Then fetch the latest user data to ensure we have the correct credit count
+      await getUserDetails();
+    } catch (e) {
+      // If there's an error, refresh user data to get the correct credit count
+      await getUserDetails();
+    }
+  }
+
   Future<void> checkTokenExpirationWrapper(
       Future<void> Function() function) async {
     try {

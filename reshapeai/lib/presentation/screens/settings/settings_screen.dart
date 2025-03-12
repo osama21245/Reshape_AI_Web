@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:reshapeai/core/theme/app_theme.dart';
 import 'package:reshapeai/presentation/cubits/auth/auth_cubit.dart';
+import 'package:reshapeai/presentation/cubits/auth/auth_state.dart';
 import 'package:reshapeai/presentation/cubits/user/user_cubit.dart';
 import 'package:reshapeai/presentation/cubits/user/user_state.dart';
-import 'package:reshapeai/presentation/screens/auth/qr_scan/qr_scan_screen.dart';
+import 'package:reshapeai/presentation/screens/auth/qr_scan/qr_scan_test_screen.dart';
+import 'package:reshapeai/presentation/screens/billing/billing_screen.dart';
 import 'package:reshapeai/presentation/widgets/gradient_button.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
@@ -15,368 +18,355 @@ class SettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.darkBackground,
       appBar: AppBar(
-        backgroundColor: Colors.black,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         title: Text(
           'Settings',
-          style: TextStyle(
-            fontSize: 20.sp,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+          style: AppTheme.headingMedium(context),
         ),
-        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
       ),
-      body: BlocBuilder<UserCubit, UserState>(
-        builder: (context, state) {
-          if (state.status == UserStatus.loading) {
-            return _buildLoadingState();
-          } else if (state.status == UserStatus.loaded && state.user != null) {
-            return _buildSettingsContent(context, state);
-          } else {
-            return _buildErrorState();
-          }
-        },
-      ),
-    );
-  }
-
-  Widget _buildLoadingState() {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[700]!,
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          children: [
-            Center(
-              child: CircleAvatar(
-                radius: 50.r,
-                backgroundColor: Colors.white,
-              ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.w),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 20.h),
+                _buildUserProfile(context),
+                SizedBox(height: 30.h),
+                _buildCreditsSection(context),
+                SizedBox(height: 30.h),
+                _buildAppSettings(context),
+                SizedBox(height: 30.h),
+                _buildLogoutButton(context),
+                SizedBox(height: 30.h),
+              ],
             ),
-            SizedBox(height: 16.h),
-            Container(
-              height: 24.h,
-              width: 150.w,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4.r),
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Container(
-              height: 16.h,
-              width: 200.w,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4.r),
-              ),
-            ),
-            SizedBox(height: 32.h),
-            ...List.generate(
-              5,
-              (index) => Padding(
-                padding: EdgeInsets.only(bottom: 16.h),
-                child: Container(
-                  height: 60.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8.r),
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 80.sp,
-            color: Colors.red[400],
-          ),
-          SizedBox(height: 16.h),
-          Text(
-            'Failed to load profile',
-            style: TextStyle(
-              fontSize: 18.sp,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          SizedBox(height: 8.h),
-          Text(
-            'Please try again later',
-            style: TextStyle(
-              fontSize: 14.sp,
-              color: Colors.grey[400],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildUserProfile(BuildContext context) {
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, state) {
+        if (state.user == null) {
+          return const SizedBox.shrink();
+        }
 
-  Widget _buildSettingsContent(BuildContext context, UserState state) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(16.w),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildProfileSection(context, state),
-          SizedBox(height: 24.h),
-          _buildSettingsSection(context),
-          SizedBox(height: 24.h),
-          _buildAboutSection(context),
-          SizedBox(height: 32.h),
-          _buildLogoutButton(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProfileSection(BuildContext context, UserState state) {
-    return Card(
-      color: Colors.grey[900],
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12.r),
-        side: BorderSide(color: Colors.grey[800]!),
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(16.w),
-        child: Column(
-          children: [
-            Center(
-              child: Stack(
+        return Container(
+          padding: EdgeInsets.all(20.w),
+          decoration: AppTheme.cardDecoration,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  CircleAvatar(
-                    radius: 50.r,
-                    backgroundColor: Colors.grey[800],
-                    backgroundImage: state.user!.profileImage != null
-                        ? CachedNetworkImageProvider(state.user!.profileImage!)
-                        : null,
-                    child: state.user!.profileImage == null
-                        ? Icon(
-                            Icons.person,
-                            size: 50.sp,
-                            color: Colors.grey[400],
-                          )
-                        : null,
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF8B5CF6),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.black,
-                          width: 2,
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryPurple.withOpacity(0.2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
                         ),
+                      ],
+                    ),
+                    child: CircleAvatar(
+                      radius: 30.r,
+                      backgroundColor: AppTheme.cardBackground,
+                      backgroundImage: state.user!.profileImage != null
+                          ? NetworkImage(state.user!.profileImage!)
+                          : null,
+                      child: state.user!.profileImage == null
+                          ? Icon(
+                              Icons.person,
+                              size: 30.sp,
+                              color: AppTheme.textSecondary,
+                            )
+                          : null,
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        state.user!.name,
+                        style: AppTheme.headingSmall(context),
                       ),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.camera_alt,
-                          size: 16.sp,
+                      SizedBox(height: 4.h),
+                      Text(
+                        state.user!.email,
+                        style: AppTheme.bodyMedium(context),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              SizedBox(height: 20.h),
+              const Divider(color: AppTheme.borderColor),
+              SizedBox(height: 20.h),
+              Text(
+                'Account Information',
+                style: AppTheme.headingSmall(context),
+              ),
+              SizedBox(height: 16.h),
+              _buildInfoRow(context, 'Name', state.user!.name),
+              SizedBox(height: 12.h),
+              _buildInfoRow(context, 'Email', state.user!.email),
+              SizedBox(height: 12.h),
+              _buildInfoRow(
+                  context, 'Member Since', _formatDate(state.user!.createdAt)),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(BuildContext context, String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: AppTheme.bodyMedium(context),
+        ),
+        Text(
+          value,
+          style: AppTheme.bodyLarge(context),
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  Widget _buildCreditsSection(BuildContext context) {
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, state) {
+        if (state.user == null) {
+          return const SizedBox.shrink();
+        }
+
+        return Container(
+          padding: EdgeInsets.all(20.w),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                AppTheme.primaryPurple.withOpacity(0.2),
+                AppTheme.primaryBlue.withOpacity(0.2),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(16.r),
+            border: Border.all(
+              color: AppTheme.primaryPurple.withOpacity(0.3),
+              width: 1.5,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(12.w),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryPurple.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: Icon(
+                      Icons.bolt,
+                      color: AppTheme.primaryPurple,
+                      size: 24.sp,
+                    ),
+                  ),
+                  SizedBox(width: 16.w),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Available Credits',
+                        style: AppTheme.headingSmall(context),
+                      ),
+                      SizedBox(height: 4.h),
+                      Text(
+                        '${state.user!.credits} credits remaining',
+                        style: AppTheme.bodyMedium(context),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const BillingScreen(),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.w,
+                        vertical: 8.h,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: AppTheme.primaryGradient,
+                        borderRadius: BorderRadius.circular(20.r),
+                      ),
+                      child: Text(
+                        'Buy Credits',
+                        style: TextStyle(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
                           color: Colors.white,
                         ),
-                        constraints: BoxConstraints(
-                          minWidth: 36.w,
-                          minHeight: 36.h,
-                        ),
-                        padding: EdgeInsets.zero,
-                        onPressed: () {
-                          // TODO: Implement profile picture update
-                        },
                       ),
                     ),
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              state.user!.name,
-              style: TextStyle(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+              SizedBox(height: 20.h),
+              Text(
+                'Use credits to transform your room photos with AI. Each transformation costs 1 credit.',
+                style: AppTheme.bodyMedium(context),
               ),
-            ),
-            SizedBox(height: 4.h),
-            Text(
-              state.user!.email,
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Colors.grey[400],
+              SizedBox(height: 16.h),
+              GradientButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const BillingScreen(),
+                    ),
+                  );
+                },
+                text: 'Purchase Credits',
+                icon: Icons.shopping_cart,
               ),
-            ),
-            SizedBox(height: 16.h),
-            OutlinedButton(
-              onPressed: () {
-                // TODO: Implement edit profile
-              },
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: Colors.grey[700]!),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.r),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAppSettings(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: AppTheme.cardDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'App Settings',
+            style: AppTheme.headingSmall(context),
+          ),
+          SizedBox(height: 16.h),
+          _buildSettingItem(
+            context,
+            'Mobile App Login',
+            'Scan QR code to login on mobile',
+            Icons.qr_code,
+            () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const QrScanTestScreen(),
                 ),
-              ),
-              child: Text(
-                'Edit Profile',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
+              );
+            },
+          ),
+          SizedBox(height: 12.h),
+          _buildSettingItem(
+            context,
+            'Notifications',
+            'Manage notification settings',
+            Icons.notifications_outlined,
+            () {
+              // Navigate to notifications settings
+            },
+          ),
+          SizedBox(height: 12.h),
+          _buildSettingItem(
+            context,
+            'Privacy Policy',
+            'Read our privacy policy',
+            Icons.privacy_tip_outlined,
+            () {
+              // Navigate to privacy policy
+            },
+          ),
+          SizedBox(height: 12.h),
+          _buildSettingItem(
+            context,
+            'Terms of Service',
+            'Read our terms of service',
+            Icons.description_outlined,
+            () {
+              // Navigate to terms of service
+            },
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildSettingsSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Settings',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        SizedBox(height: 12.h),
-        Card(
-          color: Colors.grey[900],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            side: BorderSide(color: Colors.grey[800]!),
-          ),
-          child: Column(
-            children: [
-              _buildSettingItem(
-                icon: Icons.notifications_outlined,
-                title: 'Notifications',
-                onTap: () {
-                  // TODO: Implement notifications settings
-                },
-              ),
-              Divider(color: Colors.grey[800], height: 1),
-              _buildSettingItem(
-                icon: Icons.lock_outline,
-                title: 'Privacy',
-                onTap: () {
-                  // TODO: Implement privacy settings
-                },
-              ),
-              Divider(color: Colors.grey[800], height: 1),
-              _buildSettingItem(
-                icon: Icons.language,
-                title: 'Language',
-                subtitle: 'English',
-                onTap: () {
-                  // TODO: Implement language settings
-                },
-              ),
-              Divider(color: Colors.grey[800], height: 1),
-              _buildSettingItem(
-                icon: Icons.dark_mode_outlined,
-                title: 'Theme',
-                subtitle: 'Dark',
-                onTap: () {
-                  // TODO: Implement theme settings
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAboutSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'About',
-          style: TextStyle(
-            fontSize: 18.sp,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        SizedBox(height: 12.h),
-        Card(
-          color: Colors.grey[900],
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.r),
-            side: BorderSide(color: Colors.grey[800]!),
-          ),
-          child: Column(
-            children: [
-              _buildSettingItem(
-                icon: Icons.info_outline,
-                title: 'About Reshape AI',
-                onTap: () {
-                  // TODO: Implement about page
-                },
-              ),
-              Divider(color: Colors.grey[800], height: 1),
-              _buildSettingItem(
-                icon: Icons.help_outline,
-                title: 'Help & Support',
-                onTap: () {
-                  // TODO: Implement help & support
-                },
-              ),
-              Divider(color: Colors.grey[800], height: 1),
-              _buildSettingItem(
-                icon: Icons.policy_outlined,
-                title: 'Terms & Privacy Policy',
-                onTap: () {
-                  // TODO: Implement terms & privacy policy
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSettingItem({
-    required IconData icon,
-    required String title,
-    String? subtitle,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
+  Widget _buildSettingItem(
+    BuildContext context,
+    String title,
+    String subtitle,
+    IconData icon,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
       onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(
-          horizontal: 16.w,
-          vertical: 12.h,
+      child: Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: AppTheme.darkBackground,
+          borderRadius: BorderRadius.circular(12.r),
+          border: Border.all(color: AppTheme.borderColor),
         ),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 24.sp,
-              color: Colors.grey[400],
+            Container(
+              padding: EdgeInsets.all(10.w),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryPurple.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10.r),
+              ),
+              child: Icon(
+                icon,
+                color: AppTheme.primaryPurple,
+                size: 20.sp,
+              ),
             ),
             SizedBox(width: 16.w),
             Expanded(
@@ -385,28 +375,20 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      color: Colors.white,
-                    ),
+                    style: AppTheme.bodyLarge(context),
                   ),
-                  if (subtitle != null) ...[
-                    SizedBox(height: 4.h),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        color: Colors.grey[400],
-                      ),
-                    ),
-                  ],
+                  SizedBox(height: 4.h),
+                  Text(
+                    subtitle,
+                    style: AppTheme.bodySmall(context),
+                  ),
                 ],
               ),
             ),
             Icon(
-              Icons.chevron_right,
-              size: 24.sp,
-              color: Colors.grey[400],
+              Icons.arrow_forward_ios,
+              color: AppTheme.textSecondary,
+              size: 16.sp,
             ),
           ],
         ),
@@ -415,15 +397,92 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildLogoutButton(BuildContext context) {
-    return GradientButton(
-      onPressed: () {
-        context.read<AuthCubit>().logout();
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const QrScanScreen()),
-          (route) => false,
-        );
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state.status == AuthStatus.unauthenticated) {
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const QrScanTestScreen()),
+            (route) => false,
+          );
+        }
       },
-      text: 'Logout',
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          color: Colors.red.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.red.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Logout',
+              style: AppTheme.headingSmall(context),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'You will be logged out from this device',
+              style: AppTheme.bodyMedium(context),
+            ),
+            SizedBox(height: 16.h),
+            ElevatedButton(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    backgroundColor: AppTheme.cardBackground,
+                    title: Text(
+                      'Confirm Logout',
+                      style: AppTheme.headingSmall(context),
+                    ),
+                    content: Text(
+                      'Are you sure you want to logout?',
+                      style: AppTheme.bodyMedium(context),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(color: AppTheme.textSecondary),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          context.read<AuthCubit>().logout();
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: const Text('Logout'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.logout),
+                  SizedBox(width: 8.w),
+                  const Text('Logout'),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

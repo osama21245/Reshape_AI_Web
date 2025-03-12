@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:reshapeai/core/theme/app_theme.dart';
 
 class GradientButton extends StatelessWidget {
   final VoidCallback onPressed;
@@ -7,6 +8,7 @@ class GradientButton extends StatelessWidget {
   final bool isLoading;
   final double? width;
   final double? height;
+  final IconData? icon;
 
   const GradientButton({
     super.key,
@@ -15,6 +17,7 @@ class GradientButton extends StatelessWidget {
     this.isLoading = false,
     this.width,
     this.height,
+    this.icon,
   });
 
   @override
@@ -23,12 +26,15 @@ class GradientButton extends StatelessWidget {
       width: width ?? double.infinity,
       height: height ?? 56.h,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
+        gradient: AppTheme.primaryGradient,
         borderRadius: BorderRadius.circular(12.r),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryPurple.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
@@ -38,23 +44,38 @@ class GradientButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.r),
           ),
+          padding: EdgeInsets.symmetric(horizontal: 20.w),
         ),
         child: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
+            ? SizedBox(
+                width: 24.w,
+                height: 24.w,
                 child: CircularProgressIndicator(
                   color: Colors.white,
-                  strokeWidth: 2,
+                  strokeWidth: 2.w,
                 ),
               )
-            : Text(
-                text,
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16.sp,
-                  fontWeight: FontWeight.bold,
-                ),
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon != null) ...[
+                    Icon(
+                      icon,
+                      color: Colors.white,
+                      size: 20.sp,
+                    ),
+                    SizedBox(width: 10.w),
+                  ],
+                  Text(
+                    text,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16.sp,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
       ),
     );
