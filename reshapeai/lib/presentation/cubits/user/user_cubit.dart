@@ -89,6 +89,10 @@ class UserCubit extends Cubit<UserState> {
     }
   }
 
+  void logOut() {
+    userDataSource.logOut();
+  }
+
   Future<void> checkTokenExpirationWrapper(
       Future<void> Function() function) async {
     try {

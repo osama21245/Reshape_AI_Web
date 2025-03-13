@@ -46,14 +46,14 @@ class TransformationCubit extends Cubit<TransformationState> {
       ));
 
       // Check if user has enough credits
-      if (userCubit.state.user == null || userCubit.state.user!.credits < 1) {
-        emit(state.copyWith(
-          status: TransformationStatus.error,
-          error:
-              'Insufficient credits. Please purchase more credits to continue.',
-        ));
-        return null;
-      }
+      // if (userCubit.state.user == null || userCubit.state.user!.credits < 1) {
+      //   emit(state.copyWith(
+      //     status: TransformationStatus.error,
+      //     error:
+      //         'Insufficient credits. Please purchase more credits to continue.',
+      //   ));
+      //   return null;
+      // }
 
       // Update progress
       emit(state.copyWith(creationProgress: 0.3));

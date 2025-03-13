@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:reshapeai/core/theme/app_theme.dart';
-import 'package:reshapeai/domain/entities/transformation.dart';
-import 'package:reshapeai/presentation/cubits/transformation/transformation_cubit.dart';
-import 'package:reshapeai/presentation/cubits/transformation/transformation_state.dart';
+import 'package:reshapeai/data/models/transformation_model.dart';
 import 'package:reshapeai/presentation/cubits/user/user_cubit.dart';
 import 'package:reshapeai/presentation/cubits/user/user_state.dart';
 import 'package:reshapeai/presentation/screens/upload/upload_screen.dart';
 import 'package:reshapeai/presentation/screens/transformations/transformations_screen.dart';
 import 'package:reshapeai/presentation/screens/settings/settings_screen.dart';
 import 'package:reshapeai/presentation/screens/billing/billing_screen.dart';
+import 'package:reshapeai/presentation/screens/transformation_details/transformation_details_screen.dart';
 import 'package:reshapeai/presentation/widgets/gradient_button.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
@@ -217,7 +216,9 @@ class HomeScreen extends StatelessWidget {
               SizedBox(width: 16.w),
               Text(
                 'Welcome to Reshape AI',
-                style: AppTheme.headingMedium(context),
+                style: AppTheme.headingSmall(context),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
             ],
           ),
@@ -362,12 +363,11 @@ class HomeScreen extends StatelessWidget {
               'Recent Transformations',
               style: AppTheme.headingMedium(context),
             ),
-            GestureDetector(
-              onTap: () {
+            TextButton(
+              onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => const TransformationsScreen(),
-                  ),
+                      builder: (_) => const TransformationsScreen()),
                 );
               },
               child: Text(
@@ -382,9 +382,9 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
         SizedBox(height: 16.h),
-        BlocBuilder<TransformationCubit, TransformationState>(
+        BlocBuilder<UserCubit, UserState>(
           builder: (context, state) {
-            if (state.status == TransformationStatus.loading) {
+            if (state.status == UserStatus.loading) {
               return _buildLoadingTransformations();
             }
 
@@ -392,10 +392,8 @@ class HomeScreen extends StatelessWidget {
               return _buildEmptyTransformations(context);
             }
 
-            final recentTransformations = state.transformations.length > 3
-                ? state.transformations.sublist(0, 3)
-                : state.transformations;
-
+            final recentTransformations =
+                state.transformations.take(3).toList();
             return ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -491,10 +489,17 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildTransformationItem(
-      BuildContext context, Transformation transformation) {
+      BuildContext context, TransformationModel transformation) {
     return GestureDetector(
       onTap: () {
-        // Navigate to transformation details
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TransformationDetailsScreen(
+              transformation: transformation,
+            ),
+          ),
+        );
       },
       child: Container(
         margin: EdgeInsets.only(bottom: 16.h),
@@ -552,17 +557,23 @@ class HomeScreen extends StatelessWidget {
                             color: AppTheme.primaryPurple,
                             fontWeight: FontWeight.w600,
                           ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                       SizedBox(height: 8.h),
                       Text(
                         'Room Transformation',
                         style: AppTheme.headingSmall(context),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                       SizedBox(height: 4.h),
                       Text(
                         'Created ${_formatDate(transformation.createdAt)}',
                         style: AppTheme.bodySmall(context),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ],
                   ),

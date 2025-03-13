@@ -42,7 +42,7 @@ class GradientButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 20.sp),
+              Icon(icon, size: 20.sp, color: Colors.white),
               SizedBox(width: 8.w),
             ],
             Text(
@@ -50,6 +50,7 @@ class GradientButton extends StatelessWidget {
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.w600,
+                color: Colors.white,
               ),
             ),
           ],

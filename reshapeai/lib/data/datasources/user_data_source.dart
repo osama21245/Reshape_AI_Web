@@ -10,6 +10,7 @@ abstract class UserDataSource {
   Future<Map<String, dynamic>> updateUserProfile(
       {String? name, String? profileImage});
   Future<Map<String, dynamic>> refreshToken();
+  void logOut();
 }
 
 class UserDataSourceImpl implements UserDataSource {
@@ -166,5 +167,10 @@ class UserDataSourceImpl implements UserDataSource {
       print('Error refreshing token: $e');
       throw Exception('Token refresh failed: $e');
     }
+  }
+
+  @override
+  void logOut() async {
+    await secureStorage.deleteAll();
   }
 }

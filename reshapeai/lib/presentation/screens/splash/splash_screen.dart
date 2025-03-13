@@ -6,6 +6,7 @@ import 'package:reshapeai/presentation/screens/auth/qr_scan/qr_scan_test_screen.
 import 'package:reshapeai/presentation/screens/home/home_screen.dart';
 import '../../cubits/user/user_cubit.dart';
 import '../../cubits/user/user_state.dart';
+import '../auth/qr_scan/qr_scan_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -71,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen>
             );
           } else if (state.status == UserStatus.error) {
             Navigator.of(context).pushReplacement(
-              MaterialPageRoute(builder: (_) => const QrScanTestScreen()),
+              MaterialPageRoute(builder: (_) => const QrScanScreen()),
             );
           }
         },

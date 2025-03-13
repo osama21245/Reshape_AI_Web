@@ -9,8 +9,6 @@ import 'package:reshapeai/presentation/cubits/user/user_state.dart';
 import 'package:reshapeai/presentation/screens/auth/qr_scan/qr_scan_test_screen.dart';
 import 'package:reshapeai/presentation/screens/billing/billing_screen.dart';
 import 'package:reshapeai/presentation/widgets/gradient_button.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:shimmer/shimmer.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -42,8 +40,6 @@ class SettingsScreen extends StatelessWidget {
                 _buildUserProfile(context),
                 SizedBox(height: 30.h),
                 _buildCreditsSection(context),
-                SizedBox(height: 30.h),
-                _buildAppSettings(context),
                 SizedBox(height: 30.h),
                 _buildLogoutButton(context),
                 SizedBox(height: 30.h),
@@ -223,34 +219,6 @@ class SettingsScreen extends StatelessWidget {
                         style: AppTheme.bodyMedium(context),
                       ),
                     ],
-                  ),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const BillingScreen(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: 16.w,
-                        vertical: 8.h,
-                      ),
-                      decoration: BoxDecoration(
-                        gradient: AppTheme.primaryGradient,
-                        borderRadius: BorderRadius.circular(20.r),
-                      ),
-                      child: Text(
-                        'Buy Credits',
-                        style: TextStyle(
-                          fontSize: 14.sp,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
@@ -452,7 +420,7 @@ class SettingsScreen extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          context.read<AuthCubit>().logout();
+                          context.read<UserCubit>().logOut();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,

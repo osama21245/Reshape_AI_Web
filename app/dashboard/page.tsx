@@ -2,9 +2,9 @@
 //import { auth } from "@clerk/nextjs/server";
 //import { UserButton } from "@clerk/nextjs";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
-import { X, Upload, Sparkles, ArrowRight, Zap, Users, Clock } from "lucide-react";
+import { X, Upload, Sparkles, ArrowRight, Zap, Users, Clock, Download, Smartphone, QrCode } from "lucide-react";
 import AnimatedBackground from "./_components/AnimatedBackground";
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'react-hot-toast';
@@ -13,6 +13,8 @@ import Link from "next/link";
 
 function DashboardPage() {
     const [selectedImage, setSelectedImage] = useState<number | null>(null);
+    const [showAppButton, setShowAppButton] = useState(true);
+    const [showQrCode, setShowQrCode] = useState(false);
     const searchParams = useSearchParams();
     const showSuccess = searchParams.get('success');
 
@@ -258,6 +260,135 @@ function DashboardPage() {
                             quality={100}
                             priority
                         />
+                    </motion.div>
+                </motion.div>
+            )}
+
+            {/* Floating App Download Button */}
+            {showAppButton && (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{
+                        type: "spring",
+                        stiffness: 260,
+                        damping: 20,
+                        delay: 1
+                    }}
+                    className="fixed bottom-8 right-8 z-40"
+                >
+                    <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="relative group"
+                    >
+                        {/* Pulsing background effect */}
+                        <motion.div
+                            animate={{
+                                scale: [1, 1.2, 1],
+                                opacity: [0.7, 0.3, 0.7]
+                            }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                repeatType: "reverse"
+                            }}
+                            className="absolute inset-0 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 blur-xl opacity-70"
+                        />
+                        
+                        {/* Button container */}
+                        <a href="https://a-talk-with-my-pdf.s3.eu-north-1.amazonaws.com/uploads/app-release-reshape-ai.apk" target="_blank" rel="noopener noreferrer">
+                            <motion.div
+                                className="relative flex items-center gap-3 px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full shadow-lg shadow-purple-500/30 cursor-pointer overflow-hidden"
+                            >
+                                {/* Animated background */}
+                                <motion.div
+                                    animate={{
+                                        x: ["-100%", "100%"],
+                                    }}
+                                    transition={{
+                                        duration: 3,
+                                        repeat: Infinity,
+                                        repeatType: "loop",
+                                        ease: "linear"
+                                    }}
+                                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                                />
+                                
+                                {/* Content */}
+                                <div className="flex items-center gap-3 z-10">
+                                    <div className="bg-white/20 p-2 rounded-full">
+                                        <Smartphone className="w-5 h-5 text-white" />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs text-blue-200 font-medium">RESHAPE AI</p>
+                                        <p className="text-white font-semibold">Download Our App</p>
+                                    </div>
+                                    <motion.div
+                                        animate={{ x: [0, 5, 0] }}
+                                        transition={{
+                                            duration: 1.5,
+                                            repeat: Infinity,
+                                            repeatType: "reverse"
+                                        }}
+                                    >
+                                        <Download className="w-5 h-5 text-white ml-1" />
+                                    </motion.div>
+                                </div>
+                            </motion.div>
+                        </a>
+                        
+                        {/* QR Code button */}
+                        <motion.button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowQrCode(!showQrCode);
+                            }}
+                            className="absolute -top-2 -left-2 bg-white text-purple-600 hover:bg-purple-100 p-2 rounded-full z-20 shadow-md"
+                            whileHover={{ scale: 1.2 }}
+                            whileTap={{ scale: 0.9 }}
+                        >
+                            <QrCode className="w-4 h-4" />
+                        </motion.button>
+                        
+                        {/* Close button */}
+                        <motion.button
+                            onClick={() => setShowAppButton(false)}
+                            className="absolute -top-2 -right-2 bg-gray-900 text-gray-400 hover:text-white p-1 rounded-full z-20"
+                            whileHover={{ scale: 1.2, rotate: 90 }}
+                            whileTap={{ scale: 0.9 }}
+                        >
+                            <X className="w-3 h-3" />
+                        </motion.button>
+                        
+                        {/* QR Code Popup */}
+                        <AnimatePresence>
+                            {showQrCode && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                                    animate={{ opacity: 1, scale: 1, y: -180 }}
+                                    exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                                    className="absolute bottom-full left-0 mb-4 bg-white rounded-2xl p-4 shadow-xl"
+                                >
+                                    <div className="relative">
+                                        <div className="w-40 h-40 bg-white p-2 rounded-xl overflow-hidden">
+                                          
+                                            <Image
+                                                src="/donload_app_qr.png"
+                                                alt="App QR Code"
+                                                width={150}
+                                                height={150}
+                                                className="w-full h-full object-contain"
+                                               
+                                            />
+                                        </div>
+                                        <p className="text-center mt-2 text-sm font-medium text-gray-700">Scan to download</p>
+                                        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 rotate-45 w-4 h-4 bg-white"></div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </motion.div>
                 </motion.div>
             )}
