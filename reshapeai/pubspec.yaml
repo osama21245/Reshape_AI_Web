@@ -57,6 +57,7 @@ dependencies:
   firebase_storage: ^12.4.4
   share_plus: ^10.1.4
   google_fonts: ^6.1.0
+  flutter_paypal_payment: ^1.0.8
 
 dev_dependencies:
   flutter_test:

@@ -7,6 +7,7 @@ import 'package:reshapeai/presentation/cubits/transformation/transformation_cubi
 import 'package:reshapeai/presentation/cubits/transformation/transformation_state.dart';
 import 'package:reshapeai/presentation/widgets/gradient_button.dart';
 import 'package:reshapeai/presentation/screens/transformations/transformations_screen.dart';
+import 'package:reshapeai/presentation/screens/transformation_details/transformation_details_screen.dart';
 
 class UploadScreen extends StatefulWidget {
   const UploadScreen({Key? key}) : super(key: key);
@@ -85,7 +86,7 @@ class _UploadScreenState extends State<UploadScreen> {
       _isUploading = true;
     });
 
-    context.read<TransformationCubit>().uploadTransformation(
+    context.read<TransformationCubit>().createTransformation(
           imageFile: _imageFile!,
           roomType: _selectedRoomType,
           style: _selectedStyle,
@@ -111,8 +112,7 @@ class _UploadScreenState extends State<UploadScreen> {
       ),
       body: BlocListener<TransformationCubit, TransformationState>(
         listener: (context, state) {
-          if (state.status == TransformationStatus.success &&
-              state.uploadSuccess) {
+          if (state.status == TransformationStatus.created) {
             setState(() {
               _isUploading = false;
             });
@@ -124,11 +124,23 @@ class _UploadScreenState extends State<UploadScreen> {
               ),
             );
 
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const TransformationsScreen()),
-            );
+            if (state.latestTransformation != null) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => TransformationDetailsScreen(
+                    transformation: state.latestTransformation!,
+                  ),
+                ),
+              );
+            } else {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TransformationsScreen(),
+                ),
+              );
+            }
           } else if (state.status == TransformationStatus.error) {
             setState(() {
               _isUploading = false;
@@ -136,7 +148,7 @@ class _UploadScreenState extends State<UploadScreen> {
 
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.error ?? 'Failed to create transformation'),
+                content: Text(state.error),
                 backgroundColor: Colors.red,
               ),
             );

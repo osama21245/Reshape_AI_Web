@@ -1,46 +1,59 @@
 import 'package:equatable/equatable.dart';
-import 'package:reshapeai/domain/entities/transformation.dart';
+import 'package:reshapeai/data/models/transformation_model.dart';
 
 enum TransformationStatus {
   initial,
   loading,
-  success,
+  loaded,
+  creating,
+  created,
   error,
 }
 
 class TransformationState extends Equatable {
   final TransformationStatus status;
-  final List<Transformation> transformations;
-  final String? error;
-  final bool uploadSuccess;
+  final List<TransformationModel> transformations;
+  final TransformationModel? latestTransformation;
+  final String error;
+  final double creationProgress;
 
   const TransformationState({
-    this.status = TransformationStatus.initial,
-    this.transformations = const [],
-    this.error,
-    this.uploadSuccess = false,
+    required this.status,
+    required this.transformations,
+    this.latestTransformation,
+    required this.error,
+    this.creationProgress = 0.0,
   });
 
   const TransformationState.initial()
       : status = TransformationStatus.initial,
         transformations = const [],
-        error = null,
-        uploadSuccess = false;
+        latestTransformation = null,
+        error = '',
+        creationProgress = 0.0;
 
   TransformationState copyWith({
     TransformationStatus? status,
-    List<Transformation>? transformations,
+    List<TransformationModel>? transformations,
+    TransformationModel? latestTransformation,
     String? error,
-    bool? uploadSuccess,
+    double? creationProgress,
   }) {
     return TransformationState(
       status: status ?? this.status,
       transformations: transformations ?? this.transformations,
-      error: error,
-      uploadSuccess: uploadSuccess ?? this.uploadSuccess,
+      latestTransformation: latestTransformation ?? this.latestTransformation,
+      error: error ?? this.error,
+      creationProgress: creationProgress ?? this.creationProgress,
     );
   }
 
   @override
-  List<Object?> get props => [status, transformations, error, uploadSuccess];
+  List<Object?> get props => [
+        status,
+        transformations,
+        latestTransformation,
+        error,
+        creationProgress,
+      ];
 }

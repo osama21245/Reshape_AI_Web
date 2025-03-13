@@ -14,7 +14,7 @@ class TransformationCubit extends Cubit<TransformationState> {
     required this.userCubit,
   }) : super(const TransformationState.initial());
 
-  Future<void> fetchTransformations() async {
+  Future<void> getTransformations() async {
     try {
       emit(state.copyWith(status: TransformationStatus.loading));
 
@@ -22,7 +22,7 @@ class TransformationCubit extends Cubit<TransformationState> {
           await transformationDataSource.getTransformations();
 
       emit(state.copyWith(
-        status: TransformationStatus.success,
+        status: TransformationStatus.loaded,
         transformations: transformations,
       ));
     } catch (e) {
@@ -33,52 +33,81 @@ class TransformationCubit extends Cubit<TransformationState> {
     }
   }
 
-  Future<void> uploadTransformation({
+  Future<TransformationModel?> createTransformation({
     required File imageFile,
     required String roomType,
     required String style,
     String customization = '',
   }) async {
     try {
+      emit(state.copyWith(
+        status: TransformationStatus.creating,
+        creationProgress: 0.1,
+      ));
+
       // Check if user has enough credits
-      final currentCredits = userCubit.state.user?.credits ?? 0;
-      if (currentCredits <= 0) {
+      if (userCubit.state.user == null || userCubit.state.user!.credits < 1) {
         emit(state.copyWith(
           status: TransformationStatus.error,
           error:
               'Insufficient credits. Please purchase more credits to continue.',
-          uploadSuccess: false,
         ));
-        return;
+        return null;
       }
 
-      emit(state.copyWith(
-        status: TransformationStatus.loading,
-        uploadSuccess: false,
-      ));
+      // Update progress
+      emit(state.copyWith(creationProgress: 0.3));
 
-      // Process the transformation
-      final result = await transformationDataSource.createTransformation(
+      // Create transformation
+      final transformation =
+          await transformationDataSource.createTransformation(
         imageFile: imageFile,
         roomType: roomType,
         style: style,
         customization: customization,
       );
 
-      // Update the user's credits in the UserCubit
+      // Update progress
+      emit(state.copyWith(creationProgress: 0.8));
+
+      // Update user credits after successful transformation
       await userCubit.updateCreditsAfterTransformation();
 
+      // Update transformations list
+      final updatedTransformations = [
+        transformation,
+        ...state.transformations,
+      ];
+
+      // Set the latest transformation
       emit(state.copyWith(
-        status: TransformationStatus.success,
-        uploadSuccess: true,
-        transformations: [...state.transformations, result],
+        status: TransformationStatus.created,
+        transformations: updatedTransformations,
+        latestTransformation: transformation,
+        creationProgress: 1.0,
       ));
+
+      return transformation;
     } catch (e) {
       emit(state.copyWith(
         status: TransformationStatus.error,
         error: e.toString(),
-        uploadSuccess: false,
       ));
+      return null;
     }
+  }
+
+  void resetCreationState() {
+    emit(state.copyWith(
+      status: TransformationStatus.loaded,
+      error: '',
+      creationProgress: 0.0,
+    ));
+  }
+
+  void clearLatestTransformation() {
+    emit(state.copyWith(
+      latestTransformation: null,
+    ));
   }
 }

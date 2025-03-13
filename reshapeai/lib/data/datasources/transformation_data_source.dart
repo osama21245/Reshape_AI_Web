@@ -93,7 +93,7 @@ class TransformationDataSourceImpl implements TransformationDataSource {
         throw Exception('Failed to verify user credits');
       }
 
-      final hasEnoughCredits = verifyResponse.data['success'] as bool;
+      final hasEnoughCredits = verifyResponse.data['hasEnoughCredits'] as bool;
       if (!hasEnoughCredits) {
         throw Exception(
             'Insufficient credits. Please purchase more credits to continue.');

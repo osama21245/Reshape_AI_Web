@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:reshapeai/domain/entities/transformation.dart';
+import 'package:reshapeai/data/models/transformation_model.dart';
 import 'package:reshapeai/presentation/cubits/user/user_cubit.dart';
 import 'package:reshapeai/presentation/cubits/user/user_state.dart';
 import 'package:reshapeai/presentation/widgets/gradient_button.dart';
 import 'package:reshapeai/presentation/screens/upload/upload_screen.dart';
 import 'package:reshapeai/presentation/widgets/image_comparison_slider.dart';
-import 'package:reshapeai/presentation/screens/transformations/transformation_details_screen.dart';
+import 'package:reshapeai/presentation/screens/transformation_details/transformation_details_screen.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
@@ -182,7 +182,7 @@ class _TransformationsScreenState extends State<TransformationsScreen> {
     );
   }
 
-  Widget _buildTransformationsList(List<Transformation> transformations) {
+  Widget _buildTransformationsList(List<TransformationModel> transformations) {
     return RefreshIndicator(
       onRefresh: () async {
         await context.read<UserCubit>().getUserDetails();
@@ -200,7 +200,7 @@ class _TransformationsScreenState extends State<TransformationsScreen> {
     );
   }
 
-  Widget _buildTransformationCard(Transformation transformation) {
+  Widget _buildTransformationCard(TransformationModel transformation) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
